@@ -87,6 +87,9 @@ interface AppState {
   addComment: (postId: string, text: string) => void;
   editComment: (postId: string, commentId: string, text: string) => void;
   deleteComment: (postId: string, commentId: string) => void;
+  pinComment: (postId: string, commentId: string) => void;
+  unpinComment: (postId: string, commentId: string) => void;
+  reportComment: (postId: string, commentId: string, reason: string) => void;
   completeDailyQuest: (questId: string) => void;
   completeWeeklyQuest: (questId: string) => void;
   completeMonthlyQuest: (questId: string) => void;
@@ -454,6 +457,41 @@ export const useAppStore = create<AppState>((set) => ({
           : post
       ),
     })),
+
+  pinComment: (postId, commentId) =>
+    set((state) => ({
+      posts: state.posts.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: post.comments?.map((comment) =>
+                comment.id === commentId ? { ...comment, pinned: true } : comment
+              ),
+            }
+          : post
+      ),
+    })),
+
+  unpinComment: (postId, commentId) =>
+    set((state) => ({
+      posts: state.posts.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: post.comments?.map((comment) =>
+                comment.id === commentId ? { ...comment, pinned: false } : comment
+              ),
+            }
+          : post
+      ),
+    })),
+
+  reportComment: (postId, commentId, reason) =>
+    set((state) => {
+      // In a real app, this would send the report to a moderation system
+      console.log('Comentário denunciado:', { postId, commentId, reason });
+      return state;
+    }),
 
   completeDailyQuest: (questId) =>
     set((state) => {

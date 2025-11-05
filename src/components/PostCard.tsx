@@ -26,7 +26,7 @@ function formatTimeAgo(date: Date): string {
 }
 
 export function PostCard({ post, user }: PostCardProps) {
-  const { currentUserId, likePost, unlikePost, donatePoints, blockUser, addComment, editComment, deleteComment, users, updateUserActivity, submitQuizAnswers, completeDailyQuest, posts, dailyQuests } = useAppStore();
+  const { currentUserId, likePost, unlikePost, donatePoints, blockUser, addComment, editComment, deleteComment, pinComment, unpinComment, reportComment, users, updateUserActivity, submitQuizAnswers, completeDailyQuest, posts, dailyQuests } = useAppStore();
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -34,6 +34,8 @@ export function PostCard({ post, user }: PostCardProps) {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [showDonations, setShowDonations] = useState(false);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
 
   const isQuizClosed = post.quizClosesAt && new Date() > post.quizClosesAt;
   const userAnswer = post.quizAnswers?.find(a => a.userId === currentUserId);
@@ -140,6 +142,23 @@ export function PostCard({ post, user }: PostCardProps) {
       editComment(post.id, commentId, editingCommentText);
       setEditingCommentId(null);
       setEditingCommentText('');
+    }
+  };
+
+  const handlePinComment = (commentId: string) => {
+    pinComment(post.id, commentId);
+  };
+
+  const handleUnpinComment = (commentId: string) => {
+    unpinComment(post.id, commentId);
+  };
+
+  const handleReportComment = (commentId: string) => {
+    if (reportReason.trim()) {
+      reportComment(post.id, commentId, reportReason);
+      setReportingCommentId(null);
+      setReportReason('');
+      toast.success('Comentário denunciado. Nossa equipe irá revisar.');
     }
   };
 
@@ -294,7 +313,7 @@ export function PostCard({ post, user }: PostCardProps) {
         {/* Comments section */}
         {showComments && (post.kind === 'photo' || post.kind === 'video') && (
           <div className="space-y-3 pt-3 border-t border-border">
-            {post.comments?.map((comment) => {
+            {post.comments?.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)).map((comment) => {
               const commentUser = users.find((u) => u.id === comment.userId);
               const isOwnComment = comment.userId === currentUserId;
               const isPostOwner = post.userId === currentUserId;
@@ -304,10 +323,15 @@ export function PostCard({ post, user }: PostCardProps) {
                 <div key={comment.id} className="flex gap-2">
                   <div className="text-lg">{commentUser?.avatar}</div>
                   <div className="flex-1">
-                    <div className="bg-muted rounded-lg px-3 py-2">
+                    <div className={cn("bg-muted rounded-lg px-3 py-2", comment.pinned && "border-2 border-primary")}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <p className="text-xs font-semibold text-foreground">{commentUser?.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold text-foreground">{commentUser?.name}</p>
+                            {comment.pinned && (
+                              <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">Fixado</span>
+                            )}
+                          </div>
                           {isEditing ? (
                             <Input
                               value={editingCommentText}
@@ -328,6 +352,21 @@ export function PostCard({ post, user }: PostCardProps) {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              {isPostOwner && (
+                                <>
+                                  {comment.pinned ? (
+                                    <DropdownMenuItem onClick={() => handleUnpinComment(comment.id)}>
+                                      <Flag className="w-3 h-3 mr-2" />
+                                      Desafixar
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuItem onClick={() => handlePinComment(comment.id)}>
+                                      <Flag className="w-3 h-3 mr-2" />
+                                      Fixar
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
+                              )}
                               {isOwnComment && (
                                 <DropdownMenuItem onClick={() => handleEditComment(comment.id, comment.text)}>
                                   <Edit className="w-3 h-3 mr-2" />
@@ -338,6 +377,12 @@ export function PostCard({ post, user }: PostCardProps) {
                                 <Trash2 className="w-3 h-3 mr-2" />
                                 Excluir
                               </DropdownMenuItem>
+                              {!isOwnComment && (
+                                <DropdownMenuItem onClick={() => setReportingCommentId(comment.id)} className="text-destructive">
+                                  <Flag className="w-3 h-3 mr-2" />
+                                  Denunciar
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
@@ -356,6 +401,30 @@ export function PostCard({ post, user }: PostCardProps) {
                     <p className="text-xs text-muted-foreground mt-1 px-1">
                       {formatTimeAgo(comment.createdAt)}
                     </p>
+                    
+                    {/* Report dialog */}
+                    {reportingCommentId === comment.id && (
+                      <div className="mt-2 p-2 bg-background rounded border border-border">
+                        <p className="text-xs font-semibold mb-2">Por que você está denunciando este comentário?</p>
+                        <Input
+                          placeholder="Motivo da denúncia..."
+                          value={reportReason}
+                          onChange={(e) => setReportReason(e.target.value)}
+                          className="mb-2 h-8 text-xs"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleReportComment(comment.id)} className="h-6 text-xs">
+                            Enviar
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => {
+                            setReportingCommentId(null);
+                            setReportReason('');
+                          }} className="h-6 text-xs">
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

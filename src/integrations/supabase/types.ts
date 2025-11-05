@@ -14,11 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      comment_reports: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          status: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
           created_at: string | null
           id: string
+          pinned: boolean
           post_id: string
           user_id: string
         }
@@ -26,6 +69,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          pinned?: boolean
           post_id: string
           user_id: string
         }
@@ -33,6 +77,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          pinned?: boolean
           post_id?: string
           user_id?: string
         }
