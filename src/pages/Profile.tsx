@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Post } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -112,19 +113,41 @@ export default function Profile() {
     fileInputRef.current?.click();
   };
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const emoji = prompt('Cole o emoji que deseja usar como avatar:');
-        if (emoji) {
-          updateUserAvatar(emoji);
-          toast.success('Foto atualizada!');
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Foto atualizada!');
       setEditingPhoto(false);
+      
+      // Reload page to show new avatar
+      window.location.reload();
+    } catch (error: any) {
+      toast.error('Erro ao atualizar foto: ' + error.message);
     }
   };
 
@@ -171,7 +194,15 @@ export default function Profile() {
             <div className="px-4 py-6 space-y-4">
               <div className="flex items-start gap-4">
                 <div className="relative">
-                  <div className="text-5xl">{user.avatar}</div>
+                  {user.avatar.startsWith('http') ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user.name}
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-5xl">{user.avatar}</div>
+                  )}
                   {isOwnProfile && (
                     <>
                       <Button
@@ -186,7 +217,6 @@ export default function Profile() {
                         ref={fileInputRef}
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         className="hidden"
                         onChange={handlePhotoSelect}
                       />
