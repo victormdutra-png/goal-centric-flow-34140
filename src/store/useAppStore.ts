@@ -17,6 +17,7 @@ interface WeeklyQuest {
   description: string;
   reward: number;
   completed: boolean;
+  claimed: boolean;
   progress: number;
   target: number;
   lastCompletedDate?: Date;
@@ -28,6 +29,7 @@ interface MonthlyQuest {
   description: string;
   reward: number;
   completed: boolean;
+  claimed: boolean;
   progress: { videos: number; photos: number };
   target: { videos: number; photos: number };
   lastCompletedDate?: Date;
@@ -129,6 +131,7 @@ export const useAppStore = create<AppState>((set) => ({
       description: 'Responda a 5 questionários durante a semana de forma correta',
       reward: 5,
       completed: false,
+      claimed: false,
       progress: 0,
       target: 5,
     },
@@ -138,6 +141,7 @@ export const useAppStore = create<AppState>((set) => ({
       description: 'Faça 2 doações de FOCUS durante a semana',
       reward: 5,
       completed: false,
+      claimed: false,
       progress: 0,
       target: 2,
     },
@@ -149,6 +153,7 @@ export const useAppStore = create<AppState>((set) => ({
       description: 'Publique 5 vídeos e 3 fotos durante o mês',
       reward: 20,
       completed: false,
+      claimed: false,
       progress: { videos: 0, photos: 0 },
       target: { videos: 5, photos: 3 },
     },
@@ -496,7 +501,7 @@ export const useAppStore = create<AppState>((set) => ({
   completeWeeklyQuest: (questId) =>
     set((state) => {
       const quest = state.weeklyQuests.find((q) => q.id === questId);
-      if (!quest || !quest.completed) return state;
+      if (!quest || !quest.completed || quest.claimed) return state;
 
       const newUserPoints = new Map(state.userPoints);
       const currentUserPoints = newUserPoints.get(state.currentUserId);
@@ -510,7 +515,7 @@ export const useAppStore = create<AppState>((set) => ({
 
       return {
         weeklyQuests: state.weeklyQuests.map((q) =>
-          q.id === questId ? { ...q, lastCompletedDate: new Date() } : q
+          q.id === questId ? { ...q, claimed: true, lastCompletedDate: new Date() } : q
         ),
         userPoints: newUserPoints,
       };
@@ -519,7 +524,7 @@ export const useAppStore = create<AppState>((set) => ({
   completeMonthlyQuest: (questId) =>
     set((state) => {
       const quest = state.monthlyQuests.find((q) => q.id === questId);
-      if (!quest || !quest.completed) return state;
+      if (!quest || !quest.completed || quest.claimed) return state;
 
       const newUserPoints = new Map(state.userPoints);
       const currentUserPoints = newUserPoints.get(state.currentUserId);
@@ -533,7 +538,7 @@ export const useAppStore = create<AppState>((set) => ({
 
       return {
         monthlyQuests: state.monthlyQuests.map((q) =>
-          q.id === questId ? { ...q, lastCompletedDate: new Date() } : q
+          q.id === questId ? { ...q, claimed: true, lastCompletedDate: new Date() } : q
         ),
         userPoints: newUserPoints,
       };
@@ -612,7 +617,8 @@ export const useAppStore = create<AppState>((set) => ({
         // Reset weekly quests on Monday
         newWeeklyQuests = state.weeklyQuests.map(q => ({ 
           ...q, 
-          completed: false, 
+          completed: false,
+          claimed: false,
           progress: 0,
           lastCompletedDate: undefined 
         }));
@@ -627,7 +633,8 @@ export const useAppStore = create<AppState>((set) => ({
         // Reset monthly quests on 1st of month
         newMonthlyQuests = state.monthlyQuests.map(q => ({ 
           ...q, 
-          completed: false, 
+          completed: false,
+          claimed: false,
           progress: { videos: 0, photos: 0 },
           lastCompletedDate: undefined 
         }));

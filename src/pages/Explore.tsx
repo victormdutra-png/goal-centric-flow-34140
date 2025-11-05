@@ -40,11 +40,13 @@ export default function Explore() {
       const userName = user?.name.toLowerCase() || '';
       const caption = post.caption?.toLowerCase() || '';
       const quizTheme = post.quizTheme?.toLowerCase() || '';
+      const theme = post.theme?.toLowerCase() || '';
 
       return (
         userName.includes(query) ||
         caption.includes(query) ||
-        quizTheme.includes(query)
+        quizTheme.includes(query) ||
+        theme.includes(query)
       );
     });
   }, [posts, users, searchQuery]);

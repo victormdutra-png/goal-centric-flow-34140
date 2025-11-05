@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from './ui/input';
 import focusCoin from '@/assets/focus-coin.png';
 import { QuizSlider } from './QuizSlider';
+import { toast } from 'sonner';
 
 interface PostCardProps {
   post: Post;
@@ -32,6 +33,8 @@ export function PostCard({ post, user }: PostCardProps) {
   const [commentText, setCommentText] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+  const [showLikes, setShowLikes] = useState(false);
+  const [showDonations, setShowDonations] = useState(false);
 
   const isQuizClosed = post.quizClosesAt && new Date() > post.quizClosesAt;
   const userAnswer = post.quizAnswers?.find(a => a.userId === currentUserId);
@@ -98,10 +101,19 @@ export function PostCard({ post, user }: PostCardProps) {
   };
 
   const handleDonate = () => {
-    // Allow donating to own post temporarily
+    if (post.userId === currentUserId) {
+      toast.error('Você não pode doar para sua própria publicação!');
+      return;
+    }
     if (!hasDonated) {
       donatePoints(post.id);
       updateUserActivity();
+      
+      // Notify post owner (in a real app, this would be a push notification)
+      const donor = users.find(u => u.id === currentUserId);
+      if (donor && post.userId !== currentUserId) {
+        toast.success(`Você doou 2 FOCUS para ${user.name}!`);
+      }
     }
   };
 
@@ -217,7 +229,7 @@ export function PostCard({ post, user }: PostCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleLike}
+            onClick={() => setShowLikes(true)}
             className={cn("gap-1.5", hasLiked && "text-red-500")}
           >
             <Heart className={cn("w-4 h-4", hasLiked && "fill-current")} />
@@ -227,8 +239,7 @@ export function PostCard({ post, user }: PostCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleDonate}
-            disabled={hasDonated}
+            onClick={() => setShowDonations(true)}
             className={cn("gap-1.5", hasDonated && "text-primary")}
           >
             <img src={focusCoin} alt="FOCUS" className="w-4 h-4" />
@@ -248,6 +259,67 @@ export function PostCard({ post, user }: PostCardProps) {
             </Button>
           )}
         </div>
+
+        {/* Like Action Popup */}
+        {showLikes && (
+          <div className="space-y-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold">Curtir</h4>
+              <Button variant="ghost" size="sm" onClick={() => setShowLikes(false)}>✕</Button>
+            </div>
+            {!hasLiked && (
+              <Button onClick={handleLike} size="sm" className="w-full">
+                <Heart className="w-4 h-4 mr-2" />
+                Curtir
+              </Button>
+            )}
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              <p className="text-xs text-muted-foreground">Curtido por {post.likes} {post.likes === 1 ? 'pessoa' : 'pessoas'}:</p>
+              {post.likedBy.map((userId) => {
+                const liker = users.find((u) => u.id === userId);
+                if (!liker) return null;
+                return (
+                  <div key={userId} className="flex items-center gap-2 p-2 rounded-lg bg-muted">
+                    <span className="text-lg">{liker.avatar}</span>
+                    <p className="text-sm font-semibold">{liker.name}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Donation Popup */}
+        {showDonations && (
+          <div className="space-y-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold">FOCUS</h4>
+              <Button variant="ghost" size="sm" onClick={() => setShowDonations(false)}>✕</Button>
+            </div>
+            {!hasDonated && post.userId !== currentUserId && (
+              <Button onClick={handleDonate} size="sm" className="w-full">
+                <img src={focusCoin} alt="FOCUS" className="w-4 h-4 mr-2" />
+                Doar 2 FOCUS
+              </Button>
+            )}
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              <p className="text-xs text-muted-foreground">
+                Total: {post.points} FOCUS ({post.donatedBy.length} {post.donatedBy.length === 1 ? 'doação' : 'doações'})
+              </p>
+              {post.donatedBy.map((userId) => {
+                const donor = users.find((u) => u.id === userId);
+                if (!donor) return null;
+                return (
+                  <div key={userId} className="flex items-center gap-2 p-2 rounded-lg bg-muted">
+                    <span className="text-lg">{donor.avatar}</span>
+                    <p className="text-sm font-semibold">{donor.name}</p>
+                    <span className="text-xs text-muted-foreground ml-auto">+2 FOCUS</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Comments section */}
         {showComments && (post.kind === 'photo' || post.kind === 'video') && (

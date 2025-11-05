@@ -235,11 +235,13 @@ export default function Goals() {
                       <p className="text-xs text-secondary">+{quest.reward} FOCUS</p>
                     </div>
                   </div>
-                  {quest.completed && (
+                  {quest.completed && !quest.claimed ? (
                     <Button size="sm" onClick={() => completeWeeklyQuest(quest.id)}>
                       Resgatar
                     </Button>
-                  )}
+                  ) : quest.claimed ? (
+                    <CheckCircle2 className="w-6 h-6 text-secondary" />
+                  ) : null}
                 </div>
               </Card>
             ))}
@@ -262,11 +264,13 @@ export default function Goals() {
                       <p className="text-xs text-secondary">+{quest.reward} FOCUS</p>
                     </div>
                   </div>
-                  {quest.completed && (
+                  {quest.completed && !quest.claimed ? (
                     <Button size="sm" onClick={() => completeMonthlyQuest(quest.id)}>
                       Resgatar
                     </Button>
-                  )}
+                  ) : quest.claimed ? (
+                    <CheckCircle2 className="w-6 h-6 text-secondary" />
+                  ) : null}
                 </div>
               </Card>
             ))}

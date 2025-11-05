@@ -46,7 +46,8 @@ export default function Profile() {
   const [editingBio, setEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
   const [showFollowers, setShowFollowers] = useState(false);
-  const [showGoalsStats, setShowGoalsStats] = useState(false);
+  const [showLikes, setShowLikes] = useState<string | null>(null);
+  const [showComments, setShowComments] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
@@ -235,45 +236,6 @@ export default function Profile() {
             </div>
           </header>
 
-          {/* FOCUS Stats */}
-          <div className="px-4 py-4">
-            <Card className="p-4">
-              <div className="space-y-4">
-                {/* Focus Recebido Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-base font-bold flex items-center gap-2">
-                      <img src={focusCoin} alt="FOCUS" className="w-5 h-5" />
-                      FOCUS Recebido
-                    </span>
-                    <span className="text-2xl font-bold text-green-600">{totalFocusReceived}</span>
-                  </div>
-                  <div className="space-y-2 pl-7">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Metas</span>
-                      <span className="text-sm font-semibold text-green-600">{totalFocusFromGoals}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Criação de Conteúdo</span>
-                      <span className="text-sm font-semibold text-green-600">{focusFromContent}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Focus Doado Section */}
-                <div className="border-t border-border pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-bold flex items-center gap-2">
-                      <img src={focusCoin} alt="FOCUS" className="w-5 h-5" />
-                      FOCUS Doado
-                    </span>
-                    <span className="text-2xl font-bold text-red-600">{focusDonated}</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-
           {/* Stats Panel */}
           <div className="px-4 py-4 grid grid-cols-3 gap-3">
             <Card 
@@ -289,15 +251,13 @@ export default function Profile() {
               </div>
             </Card>
 
-            <Card 
-              className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => setShowGoalsStats(true)}
-            >
+            <Card className="p-4">
               <div className="flex flex-col items-center gap-2">
-                <Trophy className="w-5 h-5 text-secondary" />
+                <img src={focusCoin} alt="FOCUS" className="w-5 h-5" />
                 <div className="text-center">
-                  <p className="text-lg font-bold text-foreground">{completedDailyQuests + completedFollowerQuests + completedUniqueQuests}</p>
-                  <p className="text-xs text-muted-foreground">Quests</p>
+                  <p className="text-lg font-bold text-green-600">+{totalFocusReceived}</p>
+                  <p className="text-lg font-bold text-red-600">-{focusDonated}</p>
+                  <p className="text-xs text-muted-foreground">FOCUS</p>
                 </div>
               </div>
             </Card>
@@ -368,14 +328,24 @@ export default function Profile() {
                   {post.caption && (
                     <p className="text-sm text-card-foreground mt-2">{post.caption}</p>
                   )}
-                  <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>❤️ {post.likes}</span>
+                   <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                    <button 
+                      onClick={() => setShowLikes(post.id)}
+                      className="hover:underline cursor-pointer"
+                    >
+                      ❤️ {post.likes}
+                    </button>
                     <span className="flex items-center gap-1">
                       <img src={focusCoin} alt="FOCUS" className="w-3 h-3" />
                       {post.points} FOCUS
                     </span>
                     {post.kind !== 'quiz' && post.comments && (
-                      <span>💬 {post.comments.length}</span>
+                      <button 
+                        onClick={() => setShowComments(post.id)}
+                        className="hover:underline cursor-pointer"
+                      >
+                        💬 {post.comments.length}
+                      </button>
                     )}
                   </div>
                 </Card>
@@ -413,36 +383,62 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      {/* Goals Stats Dialog */}
-      <Dialog open={showGoalsStats} onOpenChange={setShowGoalsStats}>
+      {/* Likes Dialog */}
+      <Dialog open={!!showLikes} onOpenChange={() => setShowLikes(null)}>
         <DialogContent className="max-w-[340px]">
           <DialogHeader>
-            <DialogTitle>Metas Alcançadas</DialogTitle>
+            <DialogTitle>Curtidas</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Quests Diárias</h3>
-              <Card className="p-3">
-                <p className="text-lg font-bold text-primary">{completedDailyQuests}</p>
-                <p className="text-xs text-muted-foreground">Quests completadas</p>
-              </Card>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Metas de Seguidores</h3>
-              <Card className="p-3">
-                <p className="text-lg font-bold text-secondary">{completedFollowerQuests}</p>
-                <p className="text-xs text-muted-foreground">Metas completadas</p>
-              </Card>
-            </div>
+          <div className="space-y-2 py-4 max-h-[300px] overflow-y-auto">
+            {showLikes && (() => {
+              const post = userPosts.find(p => p.id === showLikes);
+              if (!post || post.likedBy.length === 0) {
+                return <p className="text-center text-muted-foreground py-4">Nenhuma curtida ainda</p>;
+              }
+              return post.likedBy.map((userId) => {
+                const liker = users.find((u) => u.id === userId);
+                if (!liker) return null;
+                return (
+                  <div key={userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted">
+                    <span className="text-2xl">{liker.avatar}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{liker.name}</p>
+                      <p className="text-xs text-muted-foreground">{liker.bio}</p>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Quests Únicas</h3>
-              <Card className="p-3">
-                <p className="text-lg font-bold text-foreground">{completedUniqueQuests}</p>
-                <p className="text-xs text-muted-foreground">Quests completadas</p>
-              </Card>
-            </div>
+      {/* Comments Dialog */}
+      <Dialog open={!!showComments} onOpenChange={() => setShowComments(null)}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Comentários</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-4 max-h-[300px] overflow-y-auto">
+            {showComments && (() => {
+              const post = userPosts.find(p => p.id === showComments);
+              if (!post || !post.comments || post.comments.length === 0) {
+                return <p className="text-center text-muted-foreground py-4">Nenhum comentário ainda</p>;
+              }
+              return post.comments.map((comment) => {
+                const commenter = users.find((u) => u.id === comment.userId);
+                if (!commenter) return null;
+                return (
+                  <div key={comment.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted">
+                    <span className="text-2xl">{commenter.avatar}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{commenter.name}</p>
+                      <p className="text-xs text-card-foreground mt-1">{comment.text}</p>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </DialogContent>
       </Dialog>
