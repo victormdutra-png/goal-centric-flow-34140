@@ -1,0 +1,120 @@
+import { User, Goal, Theme } from './types';
+
+const themes: Theme[] = ['Carreira', 'Saúde', 'Finanças', 'Fé', 'Estudos', 'Outros'];
+
+export const users: User[] = [
+  {
+    id: '1',
+    name: 'Ana Silva',
+    avatar: '👩‍💼',
+    bio: 'Desenvolvedora focada em crescimento',
+    streakDays: 14,
+  },
+  {
+    id: '2',
+    name: 'Carlos Santos',
+    avatar: '👨‍💻',
+    bio: 'Aprendiz constante',
+    streakDays: 7,
+  },
+  {
+    id: '3',
+    name: 'Marina Costa',
+    avatar: '👩‍🎓',
+    bio: 'Estudante de medicina',
+    streakDays: 3,
+  },
+  {
+    id: '4',
+    name: 'Pedro Alves',
+    avatar: '👨‍🏫',
+    bio: 'Professor e mentor',
+    streakDays: 10,
+  },
+  {
+    id: '5',
+    name: 'Julia Lima',
+    avatar: '👩‍⚕️',
+    bio: 'Nutricionista apaixonada',
+    streakDays: 5,
+  },
+  {
+    id: '6',
+    name: 'Rafael Mendes',
+    avatar: '👨‍💼',
+    bio: 'Empreendedor digital',
+    streakDays: 12,
+  },
+  {
+    id: '7',
+    name: 'Beatriz Rocha',
+    avatar: '👩‍🎨',
+    bio: 'Designer criativa',
+    streakDays: 8,
+  },
+  {
+    id: '8',
+    name: 'Lucas Ferreira',
+    avatar: '👨‍🔬',
+    bio: 'Cientista de dados',
+    streakDays: 6,
+  },
+];
+
+export const goals: Goal[] = [
+  {
+    id: 'g1',
+    userId: '1',
+    theme: 'Carreira',
+    title: 'Dominar TypeScript avançado',
+    description: 'Estudar patterns e boas práticas',
+    targetValue: 100,
+    currentValue: 45,
+    isActive: true,
+  },
+  {
+    id: 'g2',
+    userId: '2',
+    theme: 'Saúde',
+    title: 'Correr 5km sem parar',
+    description: 'Treinar 3x por semana',
+    targetValue: 5,
+    currentValue: 2.5,
+  },
+  {
+    id: 'g3',
+    userId: '3',
+    theme: 'Estudos',
+    title: 'Concluir residência médica',
+    description: 'Focar em cardiologia',
+    targetValue: 100,
+    currentValue: 60,
+  },
+  {
+    id: 'g4',
+    userId: '4',
+    theme: 'Carreira',
+    title: 'Criar curso online',
+    description: 'Ensinar metodologias ágeis',
+    targetValue: 100,
+    currentValue: 30,
+  },
+  {
+    id: 'g5',
+    userId: '5',
+    theme: 'Saúde',
+    title: 'Certificação em nutrição esportiva',
+    description: 'Especialização profissional',
+    targetValue: 100,
+    currentValue: 75,
+  },
+  {
+    id: 'g6',
+    userId: '6',
+    theme: 'Finanças',
+    title: 'Atingir 100k em investimentos',
+    description: 'Diversificar portfólio',
+    targetValue: 100000,
+    currentValue: 45000,
+  },
+];

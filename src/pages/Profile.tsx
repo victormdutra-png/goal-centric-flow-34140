@@ -1,0 +1,578 @@
+import { useState, useRef, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAppStore } from '@/store/useAppStore';
+import { Post } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Card } from '@/components/ui/card';
+import { Header } from '@/components/Header';
+import { Flame, Heart, Camera, Users, Trophy, Settings, ChevronRight, Trash2, Edit, MessageCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import focusCoin from '@/assets/focus-coin.png';
+
+export default function Profile() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { 
+    users, 
+    goals, 
+    posts, 
+    isDarkMode, 
+    toggleDarkMode, 
+    currentUserId,
+    followers,
+    followUser,
+    unfollowUser,
+    dailyQuests,
+    followerQuests,
+    uniqueQuests,
+    deletePost,
+    updatePost,
+    updateUserAvatar,
+    updateUserBio,
+    activityStreak,
+    userPoints,
+  } = useAppStore();
+
+  const user = users.find((u) => u.id === id);
+  const isOwnProfile = id === currentUserId;
+
+  const [editingPhoto, setEditingPhoto] = useState(false);
+  const [editingBio, setEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState('');
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showGoalsStats, setShowGoalsStats] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editCaption, setEditCaption] = useState('');
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
+        <p className="text-muted-foreground">Usuário não encontrado</p>
+      </div>
+    );
+  }
+
+  const userGoals = goals.filter((g) => g.userId === user.id);
+  const userPosts = posts.filter((p) => p.userId === user.id);
+  const userFollowers = followers.get(user.id) || [];
+  const isFollowing = userFollowers.includes(currentUserId);
+
+  const completedDailyQuests = dailyQuests.filter((q) => q.completed).length;
+  const completedFollowerQuests = followerQuests.filter((q) => q.completed).length;
+  const completedUniqueQuests = uniqueQuests.filter((q) => q.completed).length;
+  
+  const userActivityStreak = activityStreak.get(user.id);
+  const activityDays = userActivityStreak?.days || 0;
+
+  // Calculate FOCUS points
+  const userPointsData = userPoints.get(user.id);
+  const totalFocusFromGoals = userPointsData?.totalPoints || 0;
+  
+  // Calculate FOCUS donated to others
+  const focusDonated = useMemo(() => {
+    return posts.reduce((total, post) => {
+      if (post.donatedBy.includes(user.id)) {
+        return total + 2; // Each donation is 2 FOCUS
+      }
+      return total;
+    }, 0);
+  }, [posts, user.id]);
+  
+  // Calculate FOCUS from own posts (content creation)
+  const focusFromContent = useMemo(() => {
+    return userPosts.reduce((total, post) => total + post.points, 0);
+  }, [userPosts]);
+  
+  const totalFocusReceived = totalFocusFromGoals + focusFromContent;
+
+  const handleSupport = () => {
+    if (isFollowing) {
+      unfollowUser(user.id);
+      toast.success('Deixou de seguir');
+    } else {
+      followUser(user.id);
+      toast.success('Agora você está seguindo!');
+    }
+  };
+
+  const handlePhotoEdit = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const emoji = prompt('Cole o emoji que deseja usar como avatar:');
+        if (emoji) {
+          updateUserAvatar(emoji);
+          toast.success('Foto atualizada!');
+        }
+      };
+      reader.readAsDataURL(file);
+      setEditingPhoto(false);
+    }
+  };
+
+  const handleBioEdit = () => {
+    setNewBio(user.bio);
+    setEditingBio(true);
+  };
+
+  const handleBioSave = () => {
+    updateUserBio(newBio);
+    toast.success('Descrição atualizada!');
+    setEditingBio(false);
+  };
+
+  const handleDeletePost = () => {
+    if (postToDelete) {
+      deletePost(postToDelete);
+      toast.success('Publicação excluída!');
+      setPostToDelete(null);
+    }
+  };
+
+  const handleEditPost = (post: Post) => {
+    setEditingPost(post);
+    setEditCaption(post.caption || '');
+  };
+
+  const handleSaveEditPost = () => {
+    if (editingPost) {
+      updatePost(editingPost.id, { caption: editCaption.trim() });
+      toast.success('Publicação atualizada!');
+      setEditingPost(null);
+    }
+  };
+
+  return (
+    <>
+      <div className="min-h-screen bg-background pb-20">
+        <div className="max-w-[420px] mx-auto">
+          <Header />
+          
+          {/* User Header */}
+          <header className="bg-card border-b border-border">
+            <div className="px-4 py-6 space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="text-5xl">{user.avatar}</div>
+                  {isOwnProfile && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="absolute -bottom-2 -right-2 h-8 w-8 p-0 rounded-full"
+                        onClick={handlePhotoEdit}
+                      >
+                        <Camera className="w-4 h-4" />
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={handlePhotoSelect}
+                      />
+                    </>
+                  )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl font-bold text-card-foreground">{user.name}</h1>
+                  <p className="text-sm text-muted-foreground mt-1">{user.bio}</p>
+                  {isOwnProfile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 text-xs text-primary mt-1"
+                      onClick={handleBioEdit}
+                    >
+                      Editar descrição
+                    </Button>
+                  )}
+                  <div className="flex items-center gap-3 mt-2">
+                    <div className="flex items-center gap-1.5">
+                      <Flame className="w-4 h-4 text-orange-500" />
+                      <span className="text-sm font-semibold text-card-foreground">
+                        {activityDays} {activityDays === 1 ? 'dia' : 'dias'} ativo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {!isOwnProfile && (
+                <div className="space-y-2">
+                  <Button onClick={handleSupport} className="w-full" size="sm" variant={isFollowing ? "outline" : "default"}>
+                    <Heart className="w-4 h-4 mr-1.5" />
+                    {isFollowing ? 'Seguindo' : 'Seguir'}
+                  </Button>
+                  <Button 
+                    onClick={() => navigate(`/messages?user=${id}`)} 
+                    className="w-full" 
+                    size="sm" 
+                    variant="outline"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-1.5" />
+                    Iniciar Bate-papo
+                  </Button>
+                </div>
+              )}
+            </div>
+          </header>
+
+          {/* FOCUS Stats */}
+          <div className="px-4 py-4">
+            <Card className="p-4">
+              <div className="space-y-4">
+                {/* Focus Recebido Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-base font-bold flex items-center gap-2">
+                      <img src={focusCoin} alt="FOCUS" className="w-5 h-5" />
+                      FOCUS Recebido
+                    </span>
+                    <span className="text-2xl font-bold text-green-600">{totalFocusReceived}</span>
+                  </div>
+                  <div className="space-y-2 pl-7">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Metas</span>
+                      <span className="text-sm font-semibold text-green-600">{totalFocusFromGoals}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Criação de Conteúdo</span>
+                      <span className="text-sm font-semibold text-green-600">{focusFromContent}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Focus Doado Section */}
+                <div className="border-t border-border pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold flex items-center gap-2">
+                      <img src={focusCoin} alt="FOCUS" className="w-5 h-5" />
+                      FOCUS Doado
+                    </span>
+                    <span className="text-2xl font-bold text-red-600">{focusDonated}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Stats Panel */}
+          <div className="px-4 py-4 grid grid-cols-3 gap-3">
+            <Card 
+              className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => setShowFollowers(true)}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <div className="text-center">
+                  <p className="text-lg font-bold text-foreground">{userFollowers.length}</p>
+                  <p className="text-xs text-muted-foreground">Seguidores</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card 
+              className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => setShowGoalsStats(true)}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Trophy className="w-5 h-5 text-secondary" />
+                <div className="text-center">
+                  <p className="text-lg font-bold text-foreground">{completedDailyQuests + completedFollowerQuests + completedUniqueQuests}</p>
+                  <p className="text-xs text-muted-foreground">Quests</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card 
+              className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => setShowSettings(true)}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Settings className="w-5 h-5 text-muted-foreground" />
+                <div className="text-center">
+                  <p className="text-lg font-bold text-foreground">•••</p>
+                  <p className="text-xs text-muted-foreground">Config</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Posts */}
+          <div className="px-4 py-4 space-y-3">
+            <h2 className="text-lg font-bold text-foreground">Publicações</h2>
+            {userPosts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhuma publicação ainda</p>
+            ) : (
+              userPosts.map((post) => (
+                <Card key={post.id} className="p-3">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-secondary">
+                        {post.kind === 'photo' ? '📷' : post.kind === 'video' ? '🎥' : '❓'}
+                      </span>
+                      <h3 className="font-semibold text-card-foreground text-sm capitalize">
+                        {post.kind === 'quiz' ? `Quiz de ${post.quizTheme}` : post.kind}
+                      </h3>
+                    </div>
+                    {isOwnProfile && (
+                      <div className="flex gap-1">
+                        {post.kind !== 'quiz' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleEditPost(post)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive"
+                          onClick={() => setPostToDelete(post.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  {post.mediaUrl && (
+                    <div className="mt-2 rounded-lg overflow-hidden">
+                      {post.kind === 'photo' ? (
+                        <img src={post.mediaUrl} alt="" className="w-full" />
+                      ) : post.kind === 'video' ? (
+                        <video src={post.mediaUrl} controls className="w-full" />
+                      ) : null}
+                    </div>
+                  )}
+                  {post.caption && (
+                    <p className="text-sm text-card-foreground mt-2">{post.caption}</p>
+                  )}
+                  <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>❤️ {post.likes}</span>
+                    <span className="flex items-center gap-1">
+                      <img src={focusCoin} alt="FOCUS" className="w-3 h-3" />
+                      {post.points} FOCUS
+                    </span>
+                    {post.kind !== 'quiz' && post.comments && (
+                      <span>💬 {post.comments.length}</span>
+                    )}
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Followers Dialog */}
+      <Dialog open={showFollowers} onOpenChange={setShowFollowers}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Seguidores ({userFollowers.length})</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-4 max-h-[300px] overflow-y-auto">
+            {userFollowers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">Nenhum seguidor ainda</p>
+            ) : (
+              userFollowers.map((followerId) => {
+                const follower = users.find((u) => u.id === followerId);
+                if (!follower) return null;
+                return (
+                  <div key={followerId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted">
+                    <span className="text-2xl">{follower.avatar}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{follower.name}</p>
+                      <p className="text-xs text-muted-foreground">{follower.bio}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Goals Stats Dialog */}
+      <Dialog open={showGoalsStats} onOpenChange={setShowGoalsStats}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Metas Alcançadas</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Quests Diárias</h3>
+              <Card className="p-3">
+                <p className="text-lg font-bold text-primary">{completedDailyQuests}</p>
+                <p className="text-xs text-muted-foreground">Quests completadas</p>
+              </Card>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Metas de Seguidores</h3>
+              <Card className="p-3">
+                <p className="text-lg font-bold text-secondary">{completedFollowerQuests}</p>
+                <p className="text-xs text-muted-foreground">Metas completadas</p>
+              </Card>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Quests Únicas</h3>
+              <Card className="p-3">
+                <p className="text-lg font-bold text-foreground">{completedUniqueQuests}</p>
+                <p className="text-xs text-muted-foreground">Quests completadas</p>
+              </Card>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Configurações</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
+              <Label htmlFor="dark-mode" className="cursor-pointer">
+                Modo Escuro
+              </Label>
+              <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={toggleDarkMode} />
+            </div>
+
+            <div className="p-3 bg-card rounded-lg border border-border">
+              <div className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm">Notificações</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div className="p-3 bg-card rounded-lg border border-border">
+              <div className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm">Privacidade</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div className="p-3 bg-card rounded-lg border border-border">
+              <div className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm">Idioma</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div className="p-3 bg-card rounded-lg border border-border">
+              <div className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm">Ajuda e Suporte</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div className="p-3 bg-card rounded-lg border border-border">
+              <div className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm text-destructive">Sair</span>
+                <ChevronRight className="w-4 h-4 text-destructive" />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Bio Dialog */}
+      <Dialog open={editingBio} onOpenChange={setEditingBio}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Editar Descrição</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              value={newBio}
+              onChange={(e) => setNewBio(e.target.value)}
+              placeholder="Sua descrição..."
+              maxLength={150}
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              {newBio.length}/150 caracteres
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingBio(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleBioSave}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Post Confirmation */}
+      <AlertDialog open={!!postToDelete} onOpenChange={() => setPostToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir publicação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A publicação será permanentemente excluída.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePost} className="bg-destructive text-destructive-foreground">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Post Dialog */}
+      <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Editar Publicação</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="edit-caption">Legenda</Label>
+            <Textarea
+              id="edit-caption"
+              value={editCaption}
+              onChange={(e) => setEditCaption(e.target.value)}
+              placeholder="Adicione uma legenda..."
+              maxLength={500}
+              rows={4}
+              className="mt-2"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              {editCaption.length}/500 caracteres
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingPost(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEditPost}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

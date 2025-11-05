@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Background: #e9d1b4 (bege suave) */
+    --background: 33 52% 81%;
+    --foreground: 30 15% 20%;
+
+    /* Cards brancos sobre fundo lilás */
+    --card: 0 0% 100%;
+    --card-foreground: 300 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 300 10% 15%;
+
+    /* Primary: roxo escuro para CTAs */
+    --primary: 300 35% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: verde para sucesso/progresso */
+    --secondary: 158 64% 52%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted: lilás mais claro */
+    --muted: 300 25% 85%;
+    --muted-foreground: 300 10% 40%;
+
+    /* Accent: verde discreto */
+    --accent: 158 64% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 300 20% 85%;
+    --input: 300 20% 90%;
+    --ring: 300 35% 35%;
+
+    --radius: 1rem;
+
+    /* Badge colors */
+    --badge-easy: 210 100% 60%;
+    --badge-medium: 45 93% 58%;
+    --badge-hard: 25 95% 58%;
+    --badge-epic: 280 70% 50%;
+  }
+
+  .dark {
+    --background: 25 30% 10%;
+    --foreground: 0 0% 100%;
+
+    --card: 25 25% 15%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 25 25% 15%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 25 35% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 158 55% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 25 20% 20%;
+    --muted-foreground: 0 0% 85%;
+
+    --accent: 158 55% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 25 20% 25%;
+    --input: 25 20% 22%;
+    --ring: 25 35% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
