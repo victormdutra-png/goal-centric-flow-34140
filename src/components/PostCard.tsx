@@ -26,7 +26,8 @@ function formatTimeAgo(date: Date): string {
 }
 
 export function PostCard({ post, user }: PostCardProps) {
-  const { currentUserId, likePost, unlikePost, donatePoints, blockUser, addComment, editComment, deleteComment, pinComment, unpinComment, reportComment, users, updateUserActivity, submitQuizAnswers, completeDailyQuest, posts, dailyQuests } = useAppStore();
+  const store = useAppStore();
+  const { currentUserId, likePost, unlikePost, donatePoints, blockUser, addComment, editComment, deleteComment, pinComment, unpinComment, reportComment, users, updateUserActivity, submitQuizAnswers, completeDailyQuest, posts, dailyQuests } = store;
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -146,11 +147,18 @@ export function PostCard({ post, user }: PostCardProps) {
   };
 
   const handlePinComment = (commentId: string) => {
+    const pinnedCount = post.comments?.filter(c => c.pinned).length || 0;
+    if (pinnedCount >= 3) {
+      toast.error('Você já fixou 3 comentários. Desafixe um para fixar outro.');
+      return;
+    }
     pinComment(post.id, commentId);
+    toast.success('Comentário fixado com sucesso!');
   };
 
   const handleUnpinComment = (commentId: string) => {
     unpinComment(post.id, commentId);
+    toast.success('Comentário desafixado!');
   };
 
   const handleReportComment = (commentId: string) => {

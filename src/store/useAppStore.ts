@@ -70,6 +70,7 @@ interface AppState {
   lastLoginDate: Date | null;
   blockedUsers: string[];
   activityStreak: Map<string, { days: number; lastActivity: Date }>;
+  error?: string;
 
   // UI State
   isDarkMode: boolean;
@@ -459,18 +460,31 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   pinComment: (postId, commentId) =>
-    set((state) => ({
-      posts: state.posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              comments: post.comments?.map((comment) =>
-                comment.id === commentId ? { ...comment, pinned: true } : comment
-              ),
-            }
-          : post
-      ),
-    })),
+    set((state) => {
+      const post = state.posts.find(p => p.id === postId);
+      if (!post) return state;
+
+      // Check if there are already 3 pinned comments
+      const pinnedCount = post.comments?.filter(c => c.pinned).length || 0;
+      if (pinnedCount >= 3) {
+        // Return state unchanged and indicate error
+        return { ...state, error: 'Máximo de 3 comentários fixados atingido' };
+      }
+
+      return {
+        posts: state.posts.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: p.comments?.map((comment) =>
+                  comment.id === commentId ? { ...comment, pinned: true } : comment
+                ),
+              }
+            : p
+        ),
+        error: undefined,
+      };
+    }),
 
   unpinComment: (postId, commentId) =>
     set((state) => ({
