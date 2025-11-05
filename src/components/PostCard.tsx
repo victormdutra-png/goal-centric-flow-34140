@@ -297,6 +297,7 @@ export function PostCard({ post, user }: PostCardProps) {
             {post.comments?.map((comment) => {
               const commentUser = users.find((u) => u.id === comment.userId);
               const isOwnComment = comment.userId === currentUserId;
+              const isPostOwner = post.userId === currentUserId;
               const isEditing = editingCommentId === comment.id;
               
               return (
@@ -319,7 +320,7 @@ export function PostCard({ post, user }: PostCardProps) {
                             <p className="text-sm text-card-foreground mt-0.5">{comment.text}</p>
                           )}
                         </div>
-                        {isOwnComment && !isEditing && (
+                        {(isOwnComment || isPostOwner) && !isEditing && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -327,10 +328,12 @@ export function PostCard({ post, user }: PostCardProps) {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditComment(comment.id, comment.text)}>
-                                <Edit className="w-3 h-3 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
+                              {isOwnComment && (
+                                <DropdownMenuItem onClick={() => handleEditComment(comment.id, comment.text)}>
+                                  <Edit className="w-3 h-3 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive">
                                 <Trash2 className="w-3 h-3 mr-2" />
                                 Excluir
