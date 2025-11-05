@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuth } from '@/contexts/AuthContext';
 import { Post } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -18,7 +19,8 @@ import focusCoin from '@/assets/focus-coin.png';
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { 
+  const { signOut } = useAuth();
+  const {
     users, 
     goals, 
     posts, 
@@ -486,7 +488,7 @@ export default function Profile() {
             </div>
 
             <div className="p-3 bg-card rounded-lg border border-border">
-              <div className="flex items-center justify-between cursor-pointer">
+              <div className="flex items-center justify-between cursor-pointer" onClick={signOut}>
                 <span className="text-sm text-destructive">Sair</span>
                 <ChevronRight className="w-4 h-4 text-destructive" />
               </div>
