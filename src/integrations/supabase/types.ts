@@ -350,6 +350,8 @@ export type Database = {
           following_count: number | null
           full_name: string
           id: string
+          language: string | null
+          notifications_muted: boolean | null
           phone: string
           total_focus_received: number | null
           updated_at: string | null
@@ -366,6 +368,8 @@ export type Database = {
           following_count?: number | null
           full_name: string
           id: string
+          language?: string | null
+          notifications_muted?: boolean | null
           phone: string
           total_focus_received?: number | null
           updated_at?: string | null
@@ -382,6 +386,8 @@ export type Database = {
           following_count?: number | null
           full_name?: string
           id?: string
+          language?: string | null
+          notifications_muted?: boolean | null
           phone?: string
           total_focus_received?: number | null
           updated_at?: string | null
@@ -405,6 +411,7 @@ export type Database = {
         }
         Returns: string
       }
+      delete_user_account: { Args: { user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

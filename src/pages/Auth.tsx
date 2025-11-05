@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import prumoLogo from "@/assets/prumo-logo.png";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { Eye, EyeOff } from "lucide-react";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Usuário deve ter no mínimo 3 caracteres"),
@@ -19,8 +21,13 @@ const signupSchema = z.object({
     const birth = new Date(date);
     const today = new Date();
     const age = today.getFullYear() - birth.getFullYear();
-    return age >= 13;
-  }, "Você deve ter pelo menos 13 anos"),
+    const monthDiff = today.getMonth() - birth.getMonth();
+    const dayDiff = today.getDate() - birth.getDate();
+    
+    // Adjust age if birthday hasn't occurred yet this year
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+    return actualAge >= 14;
+  }, "Você deve ter pelo menos 14 anos"),
   password: z.string()
     .min(8, "Senha deve ter no mínimo 8 caracteres")
     .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
@@ -31,6 +38,8 @@ const signupSchema = z.object({
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Signup fields
   const [username, setUsername] = useState("");
@@ -63,15 +72,41 @@ const Auth = () => {
         return;
       }
 
-      // Check if username exists
+      // Check if username exists (case-insensitive)
       const { data: existingUser } = await supabase
         .from("profiles")
         .select("username")
-        .eq("username", username)
+        .ilike("username", username)
         .maybeSingle();
 
       if (existingUser) {
         toast.error("Usuário já existe");
+        setLoading(false);
+        return;
+      }
+
+      // Check if email exists (case-insensitive)
+      const { data: existingEmail } = await supabase
+        .from("profiles")
+        .select("email")
+        .ilike("email", email)
+        .maybeSingle();
+
+      if (existingEmail) {
+        toast.error("Email já cadastrado");
+        setLoading(false);
+        return;
+      }
+
+      // Check if phone exists
+      const { data: existingPhone } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("phone", phone)
+        .maybeSingle();
+
+      if (existingPhone) {
+        toast.error("Telefone já cadastrado");
         setLoading(false);
         return;
       }
@@ -93,7 +128,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("Conta criada com sucesso! Verifique seu email.");
+      toast.success("Conta criada com sucesso!");
       navigate("/");
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar conta");
@@ -108,12 +143,12 @@ const Auth = () => {
       // Try login with email first
       let loginEmail = loginIdentifier;
 
-      // If not an email, search for username
+      // If not an email, search for username (case-insensitive)
       if (!loginIdentifier.includes("@")) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("email")
-          .eq("username", loginIdentifier)
+          .ilike("username", loginIdentifier)
           .maybeSingle();
 
         if (!profile) {
@@ -158,6 +193,12 @@ const Auth = () => {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent, action: () => void) => {
+    if (e.key === 'Enter' && !loading) {
+      action();
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md p-6">
@@ -178,19 +219,36 @@ const Auth = () => {
                 id="loginIdentifier"
                 value={loginIdentifier}
                 onChange={(e) => setLoginIdentifier(e.target.value)}
+                onKeyPress={(e) => handleKeyPress(e, handleLogin)}
                 placeholder="seu@email.com ou @usuario"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="loginPassword">Senha</Label>
-              <Input
-                id="loginPassword"
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="********"
-              />
+              <div className="relative">
+                <Input
+                  id="loginPassword"
+                  type={showLoginPassword ? "text" : "password"}
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  onKeyPress={(e) => handleKeyPress(e, handleLogin)}
+                  placeholder="********"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                >
+                  {showLoginPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
             </div>
 
             <Button
@@ -268,24 +326,63 @@ const Auth = () => {
               <Label htmlFor="birthDate">Data de Nascimento</Label>
               <Input
                 id="birthDate"
-                type="date"
+                type="text"
                 value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                onChange={(e) => {
+                  // Format as DD/MM/YYYY
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length >= 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2);
+                  }
+                  if (value.length >= 5) {
+                    value = value.slice(0, 5) + '/' + value.slice(5, 9);
+                  }
+                  
+                  // Convert to YYYY-MM-DD for validation
+                  if (value.length === 10) {
+                    const [day, month, year] = value.split('/');
+                    setBirthDate(`${year}-${month}-${day}`);
+                  } else {
+                    setBirthDate('');
+                  }
+                  
+                  // Update display value
+                  e.target.value = value;
+                }}
+                placeholder="DD/MM/AAAA"
+                maxLength={10}
               />
+              <p className="text-xs text-muted-foreground">
+                Você deve ter pelo menos 14 anos
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="********"
-              />
-              <p className="text-xs text-muted-foreground">
-                Mínimo 8 caracteres, uma maiúscula, um número e um caractere especial
-              </p>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={(e) => handleKeyPress(e, handleSignup)}
+                  placeholder="********"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+              {password && <PasswordStrengthIndicator password={password} />}
             </div>
 
             <Button

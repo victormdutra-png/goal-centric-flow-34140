@@ -54,61 +54,76 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <div className="relative">
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <div className="relative">
                       <Feed />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/explore"
-                  element={
-                    <ProtectedRoute>
+                      <TabBar />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/explore"
+                element={
+                  <ProtectedRoute>
+                    <div className="relative">
                       <Explore />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/post/new"
-                  element={
-                    <ProtectedRoute>
+                      <TabBar />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/post/new"
+                element={
+                  <ProtectedRoute>
+                    <div className="relative">
                       <NewPost />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/messages"
-                  element={
-                    <ProtectedRoute>
+                      <TabBar />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute>
+                    <div className="relative">
                       <Messages />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/goals"
-                  element={
-                    <ProtectedRoute>
+                      <TabBar />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/goals"
+                element={
+                  <ProtectedRoute>
+                    <div className="relative">
                       <Goals />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile/:id"
-                  element={
-                    <ProtectedRoute>
+                      <TabBar />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="relative">
                       <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <TabBar />
-            </div>
+                      <TabBar />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -140,7 +140,11 @@ export default function Goals() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-foreground">{quest.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{quest.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {quest.id === 'daily-engagement' 
+                        ? 'Comentar em 2 publicações diferentes e receber 2 curtidas em suas publicações'
+                        : quest.description}
+                    </p>
                     <div className="flex items-center gap-1 mt-2">
                       <img src={focusCoin} alt="FOCUS" className="w-3 h-3" />
                       <p className="text-xs text-secondary">+{quest.reward} FOCUS</p>
@@ -153,7 +157,7 @@ export default function Goals() {
                       size="sm"
                       onClick={() => handleCompleteDailyQuest(quest.id)}
                     >
-                      Concluir
+                      Resgatar
                     </Button>
                   )}
                 </div>

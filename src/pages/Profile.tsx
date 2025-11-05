@@ -13,9 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card } from '@/components/ui/card';
 import { Header } from '@/components/Header';
-import { Flame, Heart, Camera, Users, Trophy, Settings, ChevronRight, Trash2, Edit, MessageCircle } from 'lucide-react';
+import { Flame, Heart, Camera, Users, Trophy, Settings, ChevronRight, Trash2, Edit, MessageCircle, Bell, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import focusCoin from '@/assets/focus-coin.png';
+import { languages, Language } from '@/lib/i18n';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
@@ -52,9 +54,14 @@ export default function Profile() {
   const [showLikes, setShowLikes] = useState<string | null>(null);
   const [showComments, setShowComments] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showLanguage, setShowLanguage] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editCaption, setEditCaption] = useState('');
+  const [notificationsMuted, setNotificationsMuted] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('pt-BR');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -183,6 +190,52 @@ export default function Profile() {
     }
   };
 
+  const handleToggleNotifications = async () => {
+    try {
+      const newValue = !notificationsMuted;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ notifications_muted: newValue })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setNotificationsMuted(newValue);
+      toast.success(newValue ? 'Notificações silenciadas' : 'Notificações ativadas');
+    } catch (error: any) {
+      toast.error('Erro ao atualizar notificações');
+    }
+  };
+
+  const handleLanguageChange = async (lang: Language) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ language: lang })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setSelectedLanguage(lang);
+      toast.success('Idioma alterado!');
+    } catch (error: any) {
+      toast.error('Erro ao alterar idioma');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const { error } = await supabase.rpc('delete_user_account', { user_id: user.id });
+
+      if (error) throw error;
+
+      toast.success('Conta excluída com sucesso');
+      signOut();
+    } catch (error: any) {
+      toast.error('Erro ao excluir conta: ' + error.message);
+    }
+  };
+
   return (
     <>
       <div className="min-h-screen bg-background pb-20">
@@ -286,10 +339,15 @@ export default function Profile() {
             <Card className="p-4">
               <div className="flex flex-col items-center gap-2">
                 <img src={focusCoin} alt="FOCUS" className="w-5 h-5" />
-                <div className="text-center">
-                  <p className="text-lg font-bold text-green-600">+{totalFocusReceived}</p>
-                  <p className="text-lg font-bold text-red-600">-{focusDonated}</p>
-                  <p className="text-xs text-muted-foreground">FOCUS</p>
+                <div className="text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <p className="text-xs text-muted-foreground">FOCUS Obtidos:</p>
+                    <p className="text-sm font-bold text-secondary">{totalFocusReceived}</p>
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
+                    <p className="text-xs text-muted-foreground">FOCUS Doados:</p>
+                    <p className="text-sm font-bold text-destructive">{focusDonated}</p>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -489,33 +547,52 @@ export default function Profile() {
               <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={toggleDarkMode} />
             </div>
 
-            <div className="p-3 bg-card rounded-lg border border-border">
-              <div className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm">Notificações</span>
+            <div 
+              className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted/50"
+              onClick={() => {
+                setShowSettings(false);
+                setShowNotifications(true);
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4" />
+                  <span className="text-sm">Notificações</span>
+                </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
             </div>
 
-            <div className="p-3 bg-card rounded-lg border border-border">
-              <div className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm">Privacidade</span>
+            <div 
+              className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted/50"
+              onClick={() => {
+                setShowSettings(false);
+                setShowLanguage(true);
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  <span className="text-sm">Idioma</span>
+                </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
             </div>
 
-            <div className="p-3 bg-card rounded-lg border border-border">
-              <div className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm">Idioma</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            {isOwnProfile && (
+              <div 
+                className="p-3 bg-card rounded-lg border border-destructive/50 cursor-pointer hover:bg-destructive/10"
+                onClick={() => {
+                  setShowSettings(false);
+                  setShowDeleteAccount(true);
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-destructive">Excluir Conta</span>
+                  <ChevronRight className="w-4 h-4 text-destructive" />
+                </div>
               </div>
-            </div>
-
-            <div className="p-3 bg-card rounded-lg border border-border">
-              <div className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm">Ajuda e Suporte</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </div>
-            </div>
+            )}
 
             <div className="p-3 bg-card rounded-lg border border-border">
               <div className="flex items-center justify-between cursor-pointer" onClick={signOut}>
@@ -526,6 +603,71 @@ export default function Profile() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Notifications Dialog */}
+      <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Notificações</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
+              <Label htmlFor="mute-notifications" className="cursor-pointer">
+                Silenciar todas as notificações
+              </Label>
+              <Switch 
+                id="mute-notifications" 
+                checked={notificationsMuted} 
+                onCheckedChange={handleToggleNotifications} 
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Language Dialog */}
+      <Dialog open={showLanguage} onOpenChange={setShowLanguage}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Idioma</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Select value={selectedLanguage} onValueChange={(value) => handleLanguageChange(value as Language)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(languages).map(([code, name]) => (
+                  <SelectItem key={code} value={code}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Confirmation */}
+      <AlertDialog open={showDeleteAccount} onOpenChange={setShowDeleteAccount}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Conta Permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todos os seus dados, incluindo publicações, comentários e informações pessoais serão permanentemente excluídos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAccount} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir Conta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Bio Dialog */}
       <Dialog open={editingBio} onOpenChange={setEditingBio}>

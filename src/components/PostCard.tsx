@@ -33,7 +33,6 @@ export function PostCard({ post, user }: PostCardProps) {
   const [commentText, setCommentText] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
-  const [showLikes, setShowLikes] = useState(false);
   const [showDonations, setShowDonations] = useState(false);
 
   const isQuizClosed = post.quizClosesAt && new Date() > post.quizClosesAt;
@@ -229,7 +228,7 @@ export function PostCard({ post, user }: PostCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowLikes(true)}
+            onClick={handleLike}
             className={cn("gap-1.5", hasLiked && "text-red-500")}
           >
             <Heart className={cn("w-4 h-4", hasLiked && "fill-current")} />
@@ -259,35 +258,6 @@ export function PostCard({ post, user }: PostCardProps) {
             </Button>
           )}
         </div>
-
-        {/* Like Action Popup */}
-        {showLikes && (
-          <div className="space-y-3 pt-3 border-t border-border">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Curtir</h4>
-              <Button variant="ghost" size="sm" onClick={() => setShowLikes(false)}>✕</Button>
-            </div>
-            {!hasLiked && (
-              <Button onClick={handleLike} size="sm" className="w-full">
-                <Heart className="w-4 h-4 mr-2" />
-                Curtir
-              </Button>
-            )}
-            <div className="space-y-2 max-h-[200px] overflow-y-auto">
-              <p className="text-xs text-muted-foreground">Curtido por {post.likes} {post.likes === 1 ? 'pessoa' : 'pessoas'}:</p>
-              {post.likedBy.map((userId) => {
-                const liker = users.find((u) => u.id === userId);
-                if (!liker) return null;
-                return (
-                  <div key={userId} className="flex items-center gap-2 p-2 rounded-lg bg-muted">
-                    <span className="text-lg">{liker.avatar}</span>
-                    <p className="text-sm font-semibold">{liker.name}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Donation Popup */}
         {showDonations && (
