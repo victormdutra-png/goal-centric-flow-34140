@@ -11,70 +11,7 @@ import { z } from "zod";
 import prumoLogo from "@/assets/prumo-logo.png";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { Eye, EyeOff } from "lucide-react";
-
-type Country = {
-  code: string;
-  name: string;
-  phoneCode: string;
-  phoneFormat: string;
-  phonePlaceholder: string;
-  dateFormat: string;
-  datePlaceholder: string;
-  language: string;
-};
-
-const countries: Country[] = [
-  {
-    code: "BR",
-    name: "Brasil",
-    phoneCode: "+55",
-    phoneFormat: "(XX) XXXXX-XXXX",
-    phonePlaceholder: "(11) 99999-9999",
-    dateFormat: "DD/MM/YYYY",
-    datePlaceholder: "DD/MM/AAAA",
-    language: "pt-BR",
-  },
-  {
-    code: "US",
-    name: "United States",
-    phoneCode: "+1",
-    phoneFormat: "(XXX) XXX-XXXX",
-    phonePlaceholder: "(555) 555-5555",
-    dateFormat: "MM/DD/YYYY",
-    datePlaceholder: "MM/DD/YYYY",
-    language: "en-US",
-  },
-  {
-    code: "ES",
-    name: "España",
-    phoneCode: "+34",
-    phoneFormat: "XXX XXX XXX",
-    phonePlaceholder: "612 345 678",
-    dateFormat: "DD/MM/YYYY",
-    datePlaceholder: "DD/MM/AAAA",
-    language: "es-ES",
-  },
-  {
-    code: "FR",
-    name: "France",
-    phoneCode: "+33",
-    phoneFormat: "X XX XX XX XX",
-    phonePlaceholder: "6 12 34 56 78",
-    dateFormat: "DD/MM/YYYY",
-    datePlaceholder: "DD/MM/AAAA",
-    language: "fr-FR",
-  },
-  {
-    code: "DE",
-    name: "Deutschland",
-    phoneCode: "+49",
-    phoneFormat: "XXX XXXXXXX",
-    phonePlaceholder: "151 12345678",
-    dateFormat: "DD.MM.YYYY",
-    datePlaceholder: "DD.MM.JJJJ",
-    language: "de-DE",
-  },
-];
+import { countries, type Country } from "@/lib/countries";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Usuário deve ter no mínimo 3 caracteres"),
@@ -365,12 +302,22 @@ const Auth = () => {
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue>
+                        <span className="flex items-center gap-2">
+                          <span className="text-xl">{selectedCountry.flag}</span>
+                          <span>{selectedCountry.name}</span>
+                          <span className="text-muted-foreground">({selectedCountry.phoneCode})</span>
+                        </span>
+                      </SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px]">
                       {countries.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
-                          {country.name} ({country.phoneCode})
+                          <span className="flex items-center gap-2">
+                            <span className="text-xl">{country.flag}</span>
+                            <span>{country.name}</span>
+                            <span className="text-muted-foreground">({country.phoneCode})</span>
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
