@@ -58,11 +58,13 @@ const Auth = () => {
     setLoading(true);
     try {
       // Validate form
+      const cleanPhone = phone.replace(/\D/g, '');
+      
       const validation = signupSchema.safeParse({
         username,
         fullName,
         email,
-        phone: phone.replace(/\D/g, ''),
+        phone: cleanPhone,
         birthDate,
         password,
       });
@@ -73,48 +75,9 @@ const Auth = () => {
         return;
       }
 
-      // Check if username exists (case-insensitive)
-      const { data: existingUser } = await supabase
-        .from("profiles")
-        .select("username")
-        .ilike("username", username)
-        .maybeSingle();
-
-      if (existingUser) {
-        toast.error(t('user_exists'));
-        setLoading(false);
-        return;
-      }
-
-      // Check if email exists (case-insensitive)
-      const { data: existingEmail } = await supabase
-        .from("profiles")
-        .select("email")
-        .ilike("email", email)
-        .maybeSingle();
-
-      if (existingEmail) {
-        toast.error(t('email_exists'));
-        setLoading(false);
-        return;
-      }
-
-      // Check if phone exists
-      const fullPhone = `${selectedCountry.phoneCode}${phone.replace(/\D/g, '')}`;
-      const { data: existingPhone } = await supabase
-        .from("profiles")
-        .select("phone")
-        .eq("phone", fullPhone)
-        .maybeSingle();
-
-      if (existingPhone) {
-        toast.error(t('phone_exists'));
-        setLoading(false);
-        return;
-      }
-
-      // Sign up with email
-      const { error } = await supabase.auth.signUp({
+      // Sign up with email - Supabase will handle email uniqueness validation
+      const fullPhone = `${selectedCountry.phoneCode}${cleanPhone}`;
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -128,11 +91,27 @@ const Auth = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error messages in Portuguese
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+          toast.error(t('email_exists'));
+        } else {
+          toast.error(error.message || "Erro ao criar conta");
+        }
+        setLoading(false);
+        return;
+      }
 
-      toast.success(t('check_email_confirmation'));
+      // Check if email confirmation is required
+      if (data?.user && !data.session) {
+        toast.success(t('check_email_confirmation'));
+      } else {
+        toast.success(t('account_created'));
+      }
+      
       setView('login');
     } catch (error: any) {
+      console.error('Signup error:', error);
       toast.error(error.message || "Erro ao criar conta");
     } finally {
       setLoading(false);
