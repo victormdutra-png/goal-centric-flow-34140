@@ -79,6 +79,8 @@ interface AppState {
   // Actions
   setCurrentUserId: (userId: string) => void;
   toggleDarkMode: () => void;
+  loadPosts: () => Promise<void>;
+  loadUsers: () => Promise<void>;
   addPost: (post: Post) => void;
   updatePost: (postId: string, updates: Partial<Post>) => void;
   deletePost: (postId: string) => void;
@@ -258,6 +260,70 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Actions
   toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+  
+  loadPosts: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        const posts = data.map((post: any) => ({
+          id: post.id,
+          userId: post.user_id,
+          kind: post.kind,
+          mediaUrl: post.media_url,
+          caption: post.caption,
+          theme: post.theme,
+          musicUrl: post.music_url,
+          likes: post.likes || 0,
+          comments: post.comments || [],
+          donations: post.donations || 0,
+          points: post.points || 0,
+          createdAt: new Date(post.created_at),
+          quizTheme: post.quiz_theme,
+          quizQuestions: post.quiz_questions,
+          likedBy: post.liked_by || [],
+          donatedBy: post.donated_by || [],
+        }));
+        set({ posts });
+      }
+    } catch (error) {
+      console.error('Error loading posts:', error);
+      set({ error: 'Erro ao carregar publicações' });
+    }
+  },
+  
+  loadUsers: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) throw error;
+      
+      if (data) {
+        const users = data.map((profile: any) => ({
+          id: profile.id,
+          name: profile.full_name || profile.username,
+          username: profile.username,
+          avatar: profile.avatar_url || '',
+          bio: profile.bio || '',
+          isVerified: profile.is_verified || false,
+          followersCount: profile.followers_count || 0,
+          followingCount: profile.following_count || 0,
+          streakDays: 0,
+        }));
+        set({ users });
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+      set({ error: 'Erro ao carregar usuários' });
+    }
+  },
   
   addPost: (post) =>
     set((state) => {

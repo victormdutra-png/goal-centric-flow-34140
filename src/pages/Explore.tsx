@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { PostCard } from '@/components/PostCard';
 import { Header } from '@/components/Header';
@@ -7,8 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 
 export default function Explore() {
-  const { posts, users } = useAppStore();
+  const { posts, users, loadPosts, loadUsers } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Load initial data
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([loadPosts(), loadUsers()]);
+    };
+    loadData();
+  }, []);
 
   // Calculate popular themes based on post count
   const popularThemes = useMemo(() => {

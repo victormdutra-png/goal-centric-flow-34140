@@ -8,24 +8,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function Feed() {
-  const { posts, users } = useAppStore();
+  const { posts, users, loadPosts, loadUsers } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
 
   // Function to refresh feed
   const refreshFeed = async () => {
     setIsLoading(true);
     try {
-      // Fetch latest posts from Supabase
-      const { data: postsData, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      // You could update the store with fresh data here
-      // For now, just show a success message
+      await Promise.all([loadPosts(), loadUsers()]);
       toast.success('Feed atualizado!');
     } catch (error) {
       console.error('Error refreshing feed:', error);
@@ -41,6 +31,11 @@ export default function Feed() {
       onRefresh: refreshFeed,
       threshold: 80,
     });
+
+  // Load initial data
+  useEffect(() => {
+    refreshFeed();
+  }, []);
 
   // Auto-refresh every 10 minutes
   useEffect(() => {
