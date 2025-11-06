@@ -383,17 +383,35 @@ export const useAppStore = create<AppState>((set, get) => ({
       // Update Supabase profiles for FOCUS tracking (async, non-blocking)
       const updateDatabase = async () => {
         try {
-          // Increment focus_donated for donor
-          await supabase.rpc('increment_focus_donated', {
-            user_id: state.currentUserId,
-            amount: 2
-          });
+          // Get current donor profile
+          const { data: donorProfile } = await supabase
+            .from('profiles')
+            .select('focus_donated')
+            .eq('id', state.currentUserId)
+            .single();
           
-          // Increment total_focus_received for recipient
-          await supabase.rpc('increment_focus_received', {
-            user_id: post.userId,
-            amount: 2
-          });
+          if (donorProfile) {
+            // Increment focus_donated for donor
+            await supabase
+              .from('profiles')
+              .update({ focus_donated: donorProfile.focus_donated + 2 })
+              .eq('id', state.currentUserId);
+          }
+          
+          // Get current recipient profile
+          const { data: recipientProfile } = await supabase
+            .from('profiles')
+            .select('total_focus_received')
+            .eq('id', post.userId)
+            .single();
+          
+          if (recipientProfile) {
+            // Increment total_focus_received for recipient
+            await supabase
+              .from('profiles')
+              .update({ total_focus_received: recipientProfile.total_focus_received + 2 })
+              .eq('id', post.userId);
+          }
         } catch (error) {
           console.error('Error updating FOCUS in database:', error);
         }
@@ -717,7 +735,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }));
       }
 
-      // Complete check-in quest
+      // Mark check-in quest as completed (but not claimed yet - requires manual claim)
       newDailyQuests = newDailyQuests.map((q) => {
         if (q.id === 'daily-checkin') {
           return { ...q, completed: true, lastCompletedDate: new Date() };
@@ -725,23 +743,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         return q;
       });
 
-      // Award points for check-in
-      const newUserPoints = new Map(state.userPoints);
-      const currentUserPoints = newUserPoints.get(state.currentUserId);
-      if (currentUserPoints) {
-        newUserPoints.set(state.currentUserId, {
-          ...currentUserPoints,
-          totalPoints: currentUserPoints.totalPoints + 1,
-          availablePoints: currentUserPoints.availablePoints + 1,
-        });
-      }
+      // No automatic points - user must click "Resgatar" to claim
 
       return {
         lastLoginDate: now,
         dailyQuests: newDailyQuests,
         weeklyQuests: newWeeklyQuests,
         monthlyQuests: newMonthlyQuests,
-        userPoints: newUserPoints,
       };
     }),
 

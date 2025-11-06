@@ -727,6 +727,14 @@ export type Database = {
           username: string
         }[]
       }
+      increment_focus_donated: {
+        Args: { amount: number; user_id: string }
+        Returns: undefined
+      }
+      increment_focus_received: {
+        Args: { amount: number; user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

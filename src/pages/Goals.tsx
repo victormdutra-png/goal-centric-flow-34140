@@ -131,7 +131,13 @@ export default function Goals() {
                     <p className="text-xs text-secondary">+1 FOCUS</p>
                   </div>
                 </div>
-                <CheckCircle2 className="w-6 h-6 text-secondary" />
+                {dailyQuests[0]?.completed ? (
+                  <Button size="sm" onClick={() => handleCompleteDailyQuest('daily-checkin')}>
+                    Resgatar
+                  </Button>
+                ) : (
+                  <Circle className="w-6 h-6 text-muted-foreground" />
+                )}
               </div>
             </Card>
 

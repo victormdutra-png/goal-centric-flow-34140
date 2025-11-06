@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useAppStore } from "@/store/useAppStore";
 
 interface AuthContextType {
   user: User | null;
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const setCurrentUserId = useAppStore((state) => state.setCurrentUserId);
 
   useEffect(() => {
     // Set up auth state listener
@@ -41,6 +43,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Only synchronous state updates here
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Update store with current user ID
+        if (session?.user) {
+          setCurrentUserId(session.user.id);
+        } else {
+          setCurrentUserId('');
+        }
         
         // Defer Supabase calls with setTimeout to prevent deadlock
         if (session?.user) {
@@ -70,8 +79,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-
+      
+      // Update store with current user ID
       if (session?.user) {
+        setCurrentUserId(session.user.id);
+        
         try {
           const { data: profileData } = await supabase
             .from("profiles")
@@ -86,14 +98,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false);
         }
       } else {
+        setCurrentUserId('');
         setLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [setCurrentUserId]);
 
   const signOut = async () => {
+    setCurrentUserId(''); // Clear user ID from store
     await supabase.auth.signOut();
     navigate("/auth");
   };
