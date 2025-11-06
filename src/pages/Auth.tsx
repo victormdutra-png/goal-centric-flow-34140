@@ -353,86 +353,86 @@ const Auth = () => {
                   <h2 className="text-2xl font-bold">Escolha seu idioma</h2>
                   <p className="text-sm text-muted-foreground">Choose your language</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
                   <Button 
                     onClick={() => { setLanguage('pt-BR'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇧🇷</span>
-                    <span>Português</span>
+                    <span className="text-3xl">🇧🇷</span>
+                    <span className="text-base font-medium">Português (Brasil)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('en-US'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇺🇸</span>
-                    <span>English</span>
+                    <span className="text-3xl">🇺🇸</span>
+                    <span className="text-base font-medium">English (United States)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('es-ES'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇪🇸</span>
-                    <span>Español</span>
+                    <span className="text-3xl">🇪🇸</span>
+                    <span className="text-base font-medium">Español (España)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('fr-FR'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇫🇷</span>
-                    <span>Français</span>
+                    <span className="text-3xl">🇫🇷</span>
+                    <span className="text-base font-medium">Français (France)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('de-DE'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇩🇪</span>
-                    <span>Deutsch</span>
+                    <span className="text-3xl">🇩🇪</span>
+                    <span className="text-base font-medium">Deutsch (Deutschland)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('it-IT'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇮🇹</span>
-                    <span>Italiano</span>
+                    <span className="text-3xl">🇮🇹</span>
+                    <span className="text-base font-medium">Italiano (Italia)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('ja-JP'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇯🇵</span>
-                    <span>日本語</span>
+                    <span className="text-3xl">🇯🇵</span>
+                    <span className="text-base font-medium">日本語 (日本)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('zh-CN'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇨🇳</span>
-                    <span>中文</span>
+                    <span className="text-3xl">🇨🇳</span>
+                    <span className="text-base font-medium">中文 (简体)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('ko-KR'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇰🇷</span>
-                    <span>한국어</span>
+                    <span className="text-3xl">🇰🇷</span>
+                    <span className="text-base font-medium">한국어 (대한민국)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('ru-RU'); setView('initial'); }} 
                     variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-2xl">🇷🇺</span>
-                    <span>Русский</span>
+                    <span className="text-3xl">🇷🇺</span>
+                    <span className="text-base font-medium">Русский (Россия)</span>
                   </Button>
                 </div>
               </>
