@@ -15,7 +15,7 @@ export function TabBar() {
     { path: '/nova', icon: PlusCircle, label: t('new_post') },
     { path: '/chat', icon: MessageCircle, label: t('messages') },
     { path: '/metas', icon: Target, label: t('goals') },
-    { path: `/perfil-@${profile?.username || 'usuario'}`, icon: User, label: t('profile') },
+    { path: `/perfil/@${profile?.username || 'usuario'}`, icon: User, label: t('profile') },
   ];
 
   return (

@@ -126,7 +126,7 @@ const App = () => {
               {/* Redirect old goals route to new one */}
               <Route path="/goals" element={<Navigate to="/metas" replace />} />
               <Route
-                path="/perfil-@:username"
+                path="/perfil/:username"
                 element={
                   <ProtectedRoute>
                     <div className="relative">

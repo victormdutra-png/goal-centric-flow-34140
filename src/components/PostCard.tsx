@@ -193,11 +193,11 @@ export function PostCard({ post, user }: PostCardProps) {
     <article className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
       {/* Header */}
       <div className="p-4 flex items-start gap-3">
-        <Link to={`/perfil-@${user.username}`} className="text-2xl hover:opacity-80 transition-opacity">
+        <Link to={`/perfil/@${user.username}`} className="text-2xl hover:opacity-80 transition-opacity">
           {user.avatar}
         </Link>
         <div className="flex-1 min-w-0">
-          <Link to={`/perfil-@${user.username}`} className="hover:underline">
+          <Link to={`/perfil/@${user.username}`} className="hover:underline">
             <h3 className="font-semibold text-card-foreground truncate">{user.name}</h3>
           </Link>
           <p className="text-xs text-muted-foreground">

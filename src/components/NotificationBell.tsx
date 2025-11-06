@@ -54,7 +54,7 @@ export const NotificationBell = () => {
       // Navigate to the follower's profile using username
       const profile = profiles.get(notification.from_user_id);
       if (profile?.username) {
-        navigate(`/perfil-@${profile.username}`);
+        navigate(`/perfil/@${profile.username}`);
       }
     }
   };

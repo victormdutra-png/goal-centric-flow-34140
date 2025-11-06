@@ -56,13 +56,16 @@ export default function Profile() {
     const fetchProfile = async () => {
       if (!username) return;
       
+      // Remove @ if it exists in the URL parameter
+      const cleanUsername = username.startsWith('@') ? username.slice(1) : username;
+      
       setLoading(true);
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('username', username)
-          .single();
+          .eq('username', cleanUsername)
+          .maybeSingle();
 
         if (error) throw error;
         setProfileData(data);
