@@ -553,9 +553,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   completeDailyQuest: (questId) =>
     set((state) => {
       const quest = state.dailyQuests.find((q) => q.id === questId);
-      if (!quest || quest.completed) return state;
+      if (!quest || quest.lastCompletedDate) return state;
 
-      // Validate quest completion
+      // For daily-checkin, it's already marked as completed, just need to claim
+      // For other quests, validate quest completion
       if (questId === 'daily-engagement') {
         // Check if user has commented on 2 different posts
         const userComments = new Set<string>();
@@ -572,7 +573,9 @@ export const useAppStore = create<AppState>((set, get) => ({
           post.likedBy.includes(state.currentUserId)
         ).length;
 
-        if (userComments.size < 2 || userLikes < 2) return state;
+        if (userComments.size < 2 || userLikes < 2) {
+          return state;
+        }
       }
 
       const newUserPoints = new Map(state.userPoints);
@@ -761,6 +764,21 @@ export const useAppStore = create<AppState>((set, get) => ({
         newFollowers.set(userId, [...currentFollowers, state.currentUserId]);
       }
 
+      // Save to Supabase (async, non-blocking)
+      const saveToDatabase = async () => {
+        try {
+          await supabase
+            .from('follows')
+            .insert({
+              follower_id: state.currentUserId,
+              following_id: userId,
+            });
+        } catch (error) {
+          console.error('Error saving follow to database:', error);
+        }
+      };
+      saveToDatabase();
+
       // Check and auto-complete follower quests
       const totalFollowers = newFollowers.get(state.currentUserId)?.length || 0;
       const newFollowerQuests = state.followerQuests.map((q) => {
@@ -781,6 +799,21 @@ export const useAppStore = create<AppState>((set, get) => ({
         userId,
         currentFollowers.filter((id) => id !== state.currentUserId)
       );
+
+      // Delete from Supabase (async, non-blocking)
+      const deleteFromDatabase = async () => {
+        try {
+          await supabase
+            .from('follows')
+            .delete()
+            .eq('follower_id', state.currentUserId)
+            .eq('following_id', userId);
+        } catch (error) {
+          console.error('Error deleting follow from database:', error);
+        }
+      };
+      deleteFromDatabase();
+
       return { followers: newFollowers };
     }),
 

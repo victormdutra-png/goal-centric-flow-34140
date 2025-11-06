@@ -131,10 +131,12 @@ export default function Goals() {
                     <p className="text-xs text-secondary">+1 FOCUS</p>
                   </div>
                 </div>
-                {dailyQuests[0]?.completed ? (
+                {dailyQuests[0]?.completed && !dailyQuests[0]?.lastCompletedDate ? (
                   <Button size="sm" onClick={() => handleCompleteDailyQuest('daily-checkin')}>
                     Resgatar
                   </Button>
+                ) : dailyQuests[0]?.lastCompletedDate ? (
+                  <CheckCircle2 className="w-6 h-6 text-secondary" />
                 ) : (
                   <Circle className="w-6 h-6 text-muted-foreground" />
                 )}
@@ -156,7 +158,7 @@ export default function Goals() {
                       <p className="text-xs text-secondary">+{quest.reward} FOCUS</p>
                     </div>
                   </div>
-                  {quest.completed ? (
+                  {quest.lastCompletedDate ? (
                     <CheckCircle2 className="w-6 h-6 text-secondary" />
                   ) : (
                     <Button

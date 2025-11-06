@@ -35,6 +35,20 @@ export default function Explore() {
     }
 
     const query = searchQuery.toLowerCase();
+    
+    // Se começar com @, buscar por usuário
+    if (query.startsWith('@')) {
+      const username = query.slice(1); // Remove o @
+      return posts.filter((post) => {
+        const user = users.find(u => u.id === post.userId);
+        const userName = user?.name.toLowerCase() || '';
+        const userUsername = user?.username?.toLowerCase() || '';
+        
+        return userName.includes(username) || userUsername.includes(username);
+      });
+    }
+    
+    // Caso contrário, buscar por tema/conteúdo
     return posts.filter((post) => {
       const user = users.find(u => u.id === post.userId);
       const userName = user?.name.toLowerCase() || '';
@@ -80,34 +94,42 @@ export default function Explore() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar publicações..."
+              placeholder="Buscar publicações ou @usuário..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
             />
           </div>
           
-          {/* Popular Themes */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Temas em Alta</p>
-            <div className="flex flex-wrap gap-2">
-              {popularThemes.length > 0 ? (
-                popularThemes.map((theme) => (
-                  <Button
-                    key={theme}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSearchQuery(theme)}
-                    className="h-7 text-xs capitalize"
-                  >
-                    {theme}
-                  </Button>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground">Nenhuma publicação ainda</p>
-              )}
+          {/* Popular Themes or Users */}
+          {!searchQuery.startsWith('@') ? (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2">Temas em Alta</p>
+              <div className="flex flex-wrap gap-2">
+                {popularThemes.length > 0 ? (
+                  popularThemes.map((theme) => (
+                    <Button
+                      key={theme}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSearchQuery(theme)}
+                      className="h-7 text-xs capitalize"
+                    >
+                      {theme}
+                    </Button>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground">Nenhuma publicação ainda</p>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Buscando por usuário: <span className="font-semibold">{searchQuery}</span>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Posts */}
@@ -120,7 +142,8 @@ export default function Explore() {
             </div>
           ) : (
             diversifiedPosts.map((post) => {
-              const user = users.find((u) => u.id === post.userId)!;
+              const user = users.find((u) => u.id === post.userId);
+              if (!user) return null;
               return <PostCard key={post.id} post={post} user={user} />;
             })
           )}

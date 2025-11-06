@@ -328,20 +328,34 @@ export default function NewPost() {
                     <Label htmlFor="media">
                       {postType === 'video' ? 'Vídeo' : 'Foto'} *
                     </Label>
-                    <Input
-                      id="media"
-                      type="file"
-                      accept={postType === 'video' ? 'video/*' : 'image/*'}
-                      onChange={handleMediaSelect}
-                      capture={postType === 'photo' ? 'environment' : undefined}
-                    />
+                    {!mediaPreview && (
+                      <Input
+                        id="media"
+                        type="file"
+                        accept={postType === 'video' ? 'video/*' : 'image/*'}
+                        onChange={handleMediaSelect}
+                        capture={postType === 'photo' ? 'environment' : undefined}
+                      />
+                    )}
                     {mediaPreview && (
-                      <div className="mt-3 rounded-lg overflow-hidden">
+                      <div className="mt-3 rounded-lg overflow-hidden relative">
                         {postType === 'photo' ? (
                           <img src={mediaPreview} alt="Preview" className="w-full" />
                         ) : (
                           <video src={mediaPreview} controls className="w-full" />
                         )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            setMediaFile(null);
+                            setMediaPreview('');
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -361,15 +375,29 @@ export default function NewPost() {
                   {postType === 'photo' && (
                     <div className="space-y-2">
                       <Label htmlFor="music">Música de fundo (opcional)</Label>
-                      <Input
-                        id="music"
-                        type="file"
-                        accept="audio/*"
-                        onChange={handleMusicSelect}
-                      />
+                      {!musicPreview && (
+                        <Input
+                          id="music"
+                          type="file"
+                          accept="audio/*"
+                          onChange={handleMusicSelect}
+                        />
+                      )}
                       {musicPreview && (
-                        <div className="mt-2">
+                        <div className="mt-2 relative">
                           <audio src={musicPreview} controls className="w-full" />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="absolute -top-1 right-0"
+                            onClick={() => {
+                              setMusicFile(null);
+                              setMusicPreview('');
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       )}
                     </div>

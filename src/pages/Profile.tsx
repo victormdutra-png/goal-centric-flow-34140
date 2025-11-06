@@ -137,23 +137,9 @@ export default function Profile() {
   const userPointsData = user ? userPoints.get(user.id) : undefined;
   const totalFocusFromGoals = userPointsData?.totalPoints || 0;
   
-  // Calculate FOCUS donated to others
-  const focusDonated = useMemo(() => {
-    if (!user) return 0;
-    return posts.reduce((total, post) => {
-      if (post.donatedBy.includes(user.id)) {
-        return total + 2; // Each donation is 2 FOCUS
-      }
-      return total;
-    }, 0);
-  }, [posts, user]);
-  
-  // Calculate FOCUS from own posts (content creation)
-  const focusFromContent = useMemo(() => {
-    return userPosts.reduce((total, post) => total + post.points, 0);
-  }, [userPosts]);
-  
-  const totalFocusReceived = totalFocusFromGoals + focusFromContent;
+  // Get FOCUS donated and received from Supabase profile data
+  const focusDonated = isOwnProfile && authProfile ? authProfile.focus_donated : profileData?.focus_donated || 0;
+  const totalFocusReceived = isOwnProfile && authProfile ? authProfile.total_focus_received : profileData?.total_focus_received || 0;
 
   // NOW do the early returns AFTER all hooks
   if (loading) {
