@@ -40,6 +40,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
 
   // Signup fields
   const [username, setUsername] = useState("");
@@ -111,19 +113,46 @@ const Auth = () => {
         return;
       }
 
-      // Sign up
-      const { data, error } = await supabase.auth.signUp({
-        email,
+      // Format phone to E.164 format (+5511999999999)
+      const formattedPhone = phone.replace(/\D/g, '');
+      const phoneWithCountry = formattedPhone.startsWith('55') ? `+${formattedPhone}` : `+55${formattedPhone}`;
+
+      // Sign up with phone verification
+      const { error } = await supabase.auth.signUp({
+        phone: phoneWithCountry,
         password,
         options: {
           data: {
             username,
             full_name: fullName,
+            email,
             phone,
             birth_date: birthDate,
           },
-          emailRedirectTo: `${window.location.origin}/`,
         },
+      });
+
+      if (error) throw error;
+
+      toast.success("Código enviado para seu telefone!");
+      setIsVerifyingPhone(true);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar conta");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    setLoading(true);
+    try {
+      const formattedPhone = phone.replace(/\D/g, '');
+      const phoneWithCountry = formattedPhone.startsWith('55') ? `+${formattedPhone}` : `+55${formattedPhone}`;
+
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phoneWithCountry,
+        token: verificationCode,
+        type: 'sms',
       });
 
       if (error) throw error;
@@ -131,7 +160,7 @@ const Auth = () => {
       toast.success("Conta criada com sucesso!");
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar conta");
+      toast.error(error.message || "Código inválido");
     } finally {
       setLoading(false);
     }
@@ -281,117 +310,170 @@ const Auth = () => {
           </TabsContent>
 
           <TabsContent value="signup" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Usuário</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="@usuario"
-              />
-            </div>
+            {!isVerifyingPhone ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Usuário</Label>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="@usuario"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nome Completo</Label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="João Silva"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="João Silva"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => {
+                      // Format phone as (11) 99999-9999
+                      let value = e.target.value.replace(/\D/g, '');
+                      if (value.length >= 2) {
+                        value = '(' + value.slice(0, 2) + ') ' + value.slice(2);
+                      }
+                      if (value.length >= 10) {
+                        value = value.slice(0, 10) + '-' + value.slice(10, 14);
+                      }
+                      setPhone(value);
+                    }}
+                    placeholder="(11) 99999-9999"
+                    maxLength={15}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="birthDate">Data de Nascimento</Label>
-              <Input
-                id="birthDate"
-                type="text"
-                value={birthDate}
-                onChange={(e) => {
-                  // Format as DD/MM/YYYY
-                  let value = e.target.value.replace(/\D/g, '');
-                  if (value.length >= 2) {
-                    value = value.slice(0, 2) + '/' + value.slice(2);
-                  }
-                  if (value.length >= 5) {
-                    value = value.slice(0, 5) + '/' + value.slice(5, 9);
-                  }
-                  
-                  // Convert to YYYY-MM-DD for validation
-                  if (value.length === 10) {
-                    const [day, month, year] = value.split('/');
-                    setBirthDate(`${year}-${month}-${day}`);
-                  } else {
-                    setBirthDate('');
-                  }
-                  
-                  // Update display value
-                  e.target.value = value;
-                }}
-                placeholder="DD/MM/AAAA"
-                maxLength={10}
-              />
-              <p className="text-xs text-muted-foreground">
-                Você deve ter pelo menos 14 anos
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="birthDate">Data de Nascimento</Label>
+                  <Input
+                    id="birthDate"
+                    type="text"
+                    value={birthDate}
+                    onChange={(e) => {
+                      // Format as DD/MM/YYYY
+                      let value = e.target.value.replace(/\D/g, '');
+                      if (value.length >= 2) {
+                        value = value.slice(0, 2) + '/' + value.slice(2);
+                      }
+                      if (value.length >= 5) {
+                        value = value.slice(0, 5) + '/' + value.slice(5, 9);
+                      }
+                      
+                      // Convert to YYYY-MM-DD for validation
+                      if (value.length === 10) {
+                        const [day, month, year] = value.split('/');
+                        setBirthDate(`${year}-${month}-${day}`);
+                      } else {
+                        setBirthDate('');
+                      }
+                      
+                      // Update display value
+                      e.target.value = value;
+                    }}
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, handleSignup)}
-                  placeholder="********"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyPress={(e) => handleKeyPress(e, handleSignup)}
+                      placeholder="********"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  {password && <PasswordStrengthIndicator password={password} />}
+                </div>
+
                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={handleSignup}
+                  disabled={loading}
+                  className="w-full"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  {loading ? "Enviando código..." : "Criar Conta"}
                 </Button>
-              </div>
-              {password && <PasswordStrengthIndicator password={password} />}
-            </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center space-y-2 mb-4">
+                  <h3 className="text-lg font-semibold">Verificação de Telefone</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Digite o código enviado para {phone}
+                  </p>
+                </div>
 
-            <Button
-              onClick={handleSignup}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? "Criando conta..." : "Criar Conta"}
-            </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="verificationCode">Código de Verificação</Label>
+                  <Input
+                    id="verificationCode"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyPress={(e) => handleKeyPress(e, handleVerifyCode)}
+                    placeholder="000000"
+                    maxLength={6}
+                    className="text-center text-2xl tracking-widest"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleVerifyCode}
+                  disabled={loading || verificationCode.length !== 6}
+                  className="w-full"
+                >
+                  {loading ? "Verificando..." : "Verificar Código"}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsVerifyingPhone(false);
+                    setVerificationCode("");
+                  }}
+                  className="w-full"
+                >
+                  Voltar
+                </Button>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </Card>
