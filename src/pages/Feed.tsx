@@ -78,7 +78,8 @@ export default function Feed() {
             </div>
           ) : (
             posts.map((post) => {
-              const user = users.find((u) => u.id === post.userId)!;
+              const user = users.find((u) => u.id === post.userId);
+              if (!user) return null;
               return <PostCard key={post.id} post={post} user={user} />;
             })
           )}
