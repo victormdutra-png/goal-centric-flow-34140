@@ -1,18 +1,20 @@
 import { Home, Compass, PlusCircle, Target, User, MessageCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-
-const tabs = [
-  { path: '/', icon: Home, label: 'Feed' },
-  { path: '/explore', icon: Compass, label: 'Explorar' },
-  { path: '/post/new', icon: PlusCircle, label: 'Nova' },
-  { path: '/messages', icon: MessageCircle, label: 'Chat' },
-  { path: '/goals', icon: Target, label: 'Metas' },
-  { path: '/profile/1', icon: User, label: 'Perfil' },
-];
+import { useAuth } from '@/contexts/AuthContext';
 
 export function TabBar() {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const tabs = [
+    { path: '/', icon: Home, label: 'Feed' },
+    { path: '/explore', icon: Compass, label: 'Explorar' },
+    { path: '/post/new', icon: PlusCircle, label: 'Nova' },
+    { path: '/messages', icon: MessageCircle, label: 'Chat' },
+    { path: '/goals', icon: Target, label: 'Metas' },
+    { path: `/profile/${user?.id || '1'}`, icon: User, label: 'Perfil' },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">

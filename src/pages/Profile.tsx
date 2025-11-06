@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user: authUser, profile: authProfile } = useAuth();
   const {
     users, 
     goals, 
@@ -44,8 +44,19 @@ export default function Profile() {
     userPoints,
   } = useAppStore();
 
-  const user = users.find((u) => u.id === id);
-  const isOwnProfile = id === currentUserId;
+  // Use real Supabase data if viewing own profile, otherwise use store data
+  const storeUser = users.find((u) => u.id === id);
+  const isOwnProfile = authUser?.id === id;
+  
+  // Map Supabase profile to User type for own profile
+  const user = isOwnProfile && authProfile ? {
+    id: authProfile.id,
+    name: authProfile.full_name,
+    username: authProfile.username,
+    avatar: authProfile.avatar_url || '👤',
+    bio: authProfile.bio || '',
+    streakDays: 0,
+  } : storeUser;
 
   const [editingPhoto, setEditingPhoto] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
@@ -279,6 +290,7 @@ export default function Profile() {
                 
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-card-foreground">{user.name}</h1>
+                  <p className="text-sm text-primary font-medium">@{user.username || user.name.toLowerCase().replace(/\s+/g, '')}</p>
                   <p className="text-sm text-muted-foreground mt-1">{user.bio}</p>
                   {isOwnProfile && (
                     <Button

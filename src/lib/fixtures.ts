@@ -6,6 +6,7 @@ export const users: User[] = [
   {
     id: '1',
     name: 'Ana Silva',
+    username: 'anasilva',
     avatar: '👩‍💼',
     bio: 'Desenvolvedora focada em crescimento',
     streakDays: 14,
@@ -13,6 +14,7 @@ export const users: User[] = [
   {
     id: '2',
     name: 'Carlos Santos',
+    username: 'carlossantos',
     avatar: '👨‍💻',
     bio: 'Aprendiz constante',
     streakDays: 7,
@@ -20,6 +22,7 @@ export const users: User[] = [
   {
     id: '3',
     name: 'Marina Costa',
+    username: 'marinacosta',
     avatar: '👩‍🎓',
     bio: 'Estudante de medicina',
     streakDays: 3,
@@ -27,6 +30,7 @@ export const users: User[] = [
   {
     id: '4',
     name: 'Pedro Alves',
+    username: 'pedroalves',
     avatar: '👨‍🏫',
     bio: 'Professor e mentor',
     streakDays: 10,
@@ -34,6 +38,7 @@ export const users: User[] = [
   {
     id: '5',
     name: 'Julia Lima',
+    username: 'julialima',
     avatar: '👩‍⚕️',
     bio: 'Nutricionista apaixonada',
     streakDays: 5,
@@ -41,6 +46,7 @@ export const users: User[] = [
   {
     id: '6',
     name: 'Rafael Mendes',
+    username: 'rafaelmendes',
     avatar: '👨‍💼',
     bio: 'Empreendedor digital',
     streakDays: 12,
@@ -48,6 +54,7 @@ export const users: User[] = [
   {
     id: '7',
     name: 'Beatriz Rocha',
+    username: 'beatrizrocha',
     avatar: '👩‍🎨',
     bio: 'Designer criativa',
     streakDays: 8,
@@ -55,6 +62,7 @@ export const users: User[] = [
   {
     id: '8',
     name: 'Lucas Ferreira',
+    username: 'lucasferreira',
     avatar: '👨‍🔬',
     bio: 'Cientista de dados',
     streakDays: 6,

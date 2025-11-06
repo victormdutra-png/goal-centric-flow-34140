@@ -68,6 +68,7 @@ export type Theme = 'Carreira' | 'Saúde' | 'Finanças' | 'Fé' | 'Estudos' | 'O
 export interface User {
   id: string;
   name: string;
+  username?: string;
   avatar: string;
   bio: string;
   streakDays: number;
