@@ -77,7 +77,7 @@ const QUIZ_THEMES: { value: QuizTheme; label: string }[] = [
 export default function NewPost() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const { currentUserId, addPost } = useAppStore();
+  const { addPost } = useAppStore();
   
   const [postType, setPostType] = useState<PostKind | null>(null);
   
@@ -190,7 +190,7 @@ export default function NewPost() {
         const postId = `p${Date.now()}`;
         const newPost = {
           id: postId,
-          userId: currentUserId,
+          userId: authUser.id,
           kind: postType,
           theme: postTheme,
           mediaUrl: mediaPreview,
@@ -226,7 +226,7 @@ export default function NewPost() {
       const postId = `p${Date.now()}`;
       const newPost = {
         id: postId,
-        userId: currentUserId,
+        userId: authUser.id,
         kind: postType,
         theme: postTheme,
         mediaUrl: mediaPreview,

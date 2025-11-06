@@ -11,7 +11,7 @@ export default function Messages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedUserId = searchParams.get('user');
-  const { users, currentUserId } = useAppStore();
+  const { users, currentUserId, followers } = useAppStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [messageText, setMessageText] = useState('');
@@ -21,13 +21,23 @@ export default function Messages() {
     text: string;
     timestamp: Date;
   }>>([]);
+  
+  // Check if two users are mutual followers
+  const areMutualFollowers = (userId: string) => {
+    const userFollowers = followers.get(userId) || [];
+    const currentFollowers = followers.get(currentUserId) || [];
+    return userFollowers.includes(currentUserId) && currentFollowers.includes(userId);
+  };
 
   const otherUsers = users.filter((u) => u.id !== currentUserId);
-  const filteredUsers = otherUsers.filter((u) =>
+  // Filter to show only mutual followers
+  const mutualUsers = otherUsers.filter((u) => areMutualFollowers(u.id));
+  const filteredUsers = mutualUsers.filter((u) =>
     u.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const selectedUser = selectedUserId ? users.find((u) => u.id === selectedUserId) : null;
+  const canChat = selectedUser ? areMutualFollowers(selectedUser.id) : false;
 
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedUserId) return;
@@ -103,6 +113,14 @@ export default function Messages() {
                 ))
               )}
             </div>
+          </div>
+        ) : !canChat ? (
+          <div className="px-4 py-8 text-center">
+            <div className="text-4xl mb-3">{selectedUser.avatar}</div>
+            <p className="text-card-foreground font-semibold mb-2">{selectedUser.name}</p>
+            <p className="text-sm text-muted-foreground">
+              Você e {selectedUser.name} precisam se seguir mutuamente para iniciar uma conversa.
+            </p>
           </div>
         ) : (
           <div className="flex flex-col h-[calc(100vh-153px)]">

@@ -394,7 +394,17 @@ export default function Profile() {
                 
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-card-foreground">{user.name}</h1>
-                  <p className="text-sm text-primary font-medium">@{user.username || user.name.toLowerCase().replace(/\s+/g, '')}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-primary font-medium">@{user.username || user.name.toLowerCase().replace(/\s+/g, '')}</p>
+                    {isOwnProfile && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 bg-secondary/20 rounded-full">
+                        <img src={focusCoin} alt="FOCUS" className="w-3 h-3" />
+                        <span className="text-xs font-bold text-secondary">
+                          {userPointsData?.availablePoints || 0}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   <MentionText text={user.bio} className="text-sm text-muted-foreground mt-1" />
                   {isOwnProfile && (
                     <Button
@@ -457,11 +467,11 @@ export default function Profile() {
                 <img src={focusCoin} alt="FOCUS" className="w-5 h-5" />
                 <div className="text-center space-y-1">
                   <div className="flex items-center justify-center gap-1">
-                    <p className="text-xs text-muted-foreground">FOCUS Obtidos:</p>
+                    <p className="text-xs text-muted-foreground">Recebido:</p>
                     <p className="text-sm font-bold text-secondary">{totalFocusReceived}</p>
                   </div>
                   <div className="flex items-center justify-center gap-1">
-                    <p className="text-xs text-muted-foreground">FOCUS Doados:</p>
+                    <p className="text-xs text-muted-foreground">Doado:</p>
                     <p className="text-sm font-bold text-destructive">{focusDonated}</p>
                   </div>
                 </div>

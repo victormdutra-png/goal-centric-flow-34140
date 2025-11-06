@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Post, Goal, User, UserPoints, Comment } from '@/lib/types';
 import { users as initialUsers, goals as initialGoals } from '@/lib/fixtures';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DailyQuest {
   id: string;
@@ -76,6 +77,7 @@ interface AppState {
   isDarkMode: boolean;
 
   // Actions
+  setCurrentUserId: (userId: string) => void;
   toggleDarkMode: () => void;
   addPost: (post: Post) => void;
   updatePost: (postId: string, updates: Partial<Post>) => void;
@@ -105,13 +107,16 @@ interface AppState {
   updateUserActivity: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   // Initial data
   users: initialUsers,
   goals: initialGoals,
   posts: [],
-  currentUserId: '1',
+  currentUserId: '', // Will be set by auth
   userPoints: new Map(initialUsers.map(u => [u.id, { userId: u.id, totalPoints: 0, availablePoints: 0 }])),
+  
+  // Add action to set current user ID
+  setCurrentUserId: (userId: string) => set({ currentUserId: userId }),
   dailyQuests: [
     {
       id: 'daily-checkin',
@@ -350,8 +355,8 @@ export const useAppStore = create<AppState>((set) => ({
   donatePoints: (postId) =>
     set((state) => {
       const post = state.posts.find((p) => p.id === postId);
-      // Allow donating to own post temporarily
-      if (!post || post.donatedBy.includes(state.currentUserId)) return state;
+      // Don't allow donating to own post
+      if (!post || post.userId === state.currentUserId || post.donatedBy.includes(state.currentUserId)) return state;
 
       const currentUserPoints = state.userPoints.get(state.currentUserId);
       if (!currentUserPoints || currentUserPoints.availablePoints < 2) {
@@ -360,13 +365,13 @@ export const useAppStore = create<AppState>((set) => ({
 
       const newUserPoints = new Map(state.userPoints);
       
-      // Deduct 2 points from current user
+      // Deduct 2 points from current user (decrease available)
       newUserPoints.set(state.currentUserId, {
         ...currentUserPoints,
         availablePoints: currentUserPoints.availablePoints - 2,
       });
 
-      // Add 2 points to post owner
+      // Add 2 points to post owner (increase total received)
       const recipientPoints = newUserPoints.get(post.userId);
       if (recipientPoints) {
         newUserPoints.set(post.userId, {
@@ -374,6 +379,26 @@ export const useAppStore = create<AppState>((set) => ({
           totalPoints: recipientPoints.totalPoints + 2,
         });
       }
+      
+      // Update Supabase profiles for FOCUS tracking (async, non-blocking)
+      const updateDatabase = async () => {
+        try {
+          // Increment focus_donated for donor
+          await supabase.rpc('increment_focus_donated', {
+            user_id: state.currentUserId,
+            amount: 2
+          });
+          
+          // Increment total_focus_received for recipient
+          await supabase.rpc('increment_focus_received', {
+            user_id: post.userId,
+            amount: 2
+          });
+        } catch (error) {
+          console.error('Error updating FOCUS in database:', error);
+        }
+      };
+      updateDatabase();
 
       const newPosts = state.posts.map((p) =>
         p.id === postId
