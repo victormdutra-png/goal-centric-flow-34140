@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Header } from '@/components/Header';
 import { ArrowLeft, Video, Camera, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { MentionInput } from '@/components/MentionInput';
+import { processMentions } from '@/lib/mentions';
+import { useAuth } from '@/contexts/AuthContext';
 
 const QUIZ_THEMES: { value: QuizTheme; label: string }[] = [
   { value: 'arquitetura', label: 'Arquitetura' },
@@ -73,6 +76,7 @@ const QUIZ_THEMES: { value: QuizTheme; label: string }[] = [
 
 export default function NewPost() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const { currentUserId, addPost } = useAppStore();
   
   const [postType, setPostType] = useState<PostKind | null>(null);
@@ -144,11 +148,16 @@ export default function NewPost() {
     setQuestions(newQuestions);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!postType) {
       toast.error('Selecione o tipo de publicação');
+      return;
+    }
+
+    if (!authUser?.id) {
+      toast.error('Você precisa estar logado para criar posts');
       return;
     }
 
@@ -178,8 +187,9 @@ export default function NewPost() {
         const closesAt = new Date();
         closesAt.setHours(closesAt.getHours() + quizDuration);
 
+        const postId = `p${Date.now()}`;
         const newPost = {
-          id: `p${Date.now()}`,
+          id: postId,
           userId: currentUserId,
           kind: postType,
           theme: postTheme,
@@ -200,13 +210,22 @@ export default function NewPost() {
         };
 
         addPost(newPost);
+        
+        // Process mentions asynchronously (non-blocking)
+        if (caption.trim()) {
+          processMentions(caption, authUser.id, postId).catch((error) => {
+            console.error('Error processing mentions:', error);
+          });
+        }
+        
         toast.success(postType === 'video' ? 'Vídeo com questionário publicado!' : 'Foto com questionário publicada!');
         navigate('/');
         return;
       }
 
+      const postId = `p${Date.now()}`;
       const newPost = {
-        id: `p${Date.now()}`,
+        id: postId,
         userId: currentUserId,
         kind: postType,
         theme: postTheme,
@@ -222,6 +241,14 @@ export default function NewPost() {
       };
 
       addPost(newPost);
+      
+      // Process mentions asynchronously (non-blocking)
+      if (caption.trim()) {
+        processMentions(caption, authUser.id, postId).catch((error) => {
+          console.error('Error processing mentions:', error);
+        });
+      }
+      
       toast.success('Publicado com sucesso!');
       navigate('/');
     }
@@ -321,13 +348,12 @@ export default function NewPost() {
 
                   <div className="space-y-2">
                     <Label htmlFor="caption">Legenda (opcional)</Label>
-                    <Textarea
-                      id="caption"
-                      placeholder="Adicione uma legenda..."
+                    <MentionInput
                       value={caption}
-                      onChange={(e) => setCaption(e.target.value)}
+                      onChange={setCaption}
+                      placeholder="Adicione uma legenda... (use @ para mencionar)"
+                      className="min-h-[80px]"
                       maxLength={500}
-                      rows={3}
                     />
                   </div>
 

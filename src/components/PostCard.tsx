@@ -9,6 +9,10 @@ import { Input } from './ui/input';
 import focusCoin from '@/assets/focus-coin.png';
 import { QuizSlider } from './QuizSlider';
 import { toast } from 'sonner';
+import { MentionInput } from './MentionInput';
+import { MentionText } from './MentionText';
+import { processMentions } from '@/lib/mentions';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PostCardProps {
   post: Post;
@@ -27,6 +31,7 @@ function formatTimeAgo(date: Date): string {
 
 export function PostCard({ post, user }: PostCardProps) {
   const store = useAppStore();
+  const { user: authUser } = useAuth();
   const { currentUserId, likePost, unlikePost, donatePoints, blockUser, addComment, editComment, deleteComment, pinComment, unpinComment, reportComment, users, updateUserActivity, submitQuizAnswers, completeDailyQuest, posts, dailyQuests } = store;
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [hasAnswered, setHasAnswered] = useState(false);
@@ -69,9 +74,15 @@ export function PostCard({ post, user }: PostCardProps) {
     }
   };
 
-  const handleAddComment = () => {
-    if (commentText.trim()) {
+  const handleAddComment = async () => {
+    if (commentText.trim() && authUser?.id) {
       addComment(post.id, commentText);
+      
+      // Process mentions asynchronously (non-blocking)
+      processMentions(commentText, authUser.id, undefined, post.id).catch((error) => {
+        console.error('Error processing mentions:', error);
+      });
+      
       setCommentText('');
       updateUserActivity();
       checkDailyEngagement();
@@ -245,7 +256,7 @@ export function PostCard({ post, user }: PostCardProps) {
       {/* Caption */}
       {post.caption && (
         <div className="px-4 py-3">
-          <p className="text-sm text-card-foreground">{post.caption}</p>
+          <MentionText text={post.caption} className="text-sm text-card-foreground" />
         </div>
       )}
 
@@ -349,7 +360,7 @@ export function PostCard({ post, user }: PostCardProps) {
                               autoFocus
                             />
                           ) : (
-                            <p className="text-sm text-card-foreground mt-0.5">{comment.text}</p>
+                            <MentionText text={comment.text} className="text-sm text-card-foreground mt-0.5" />
                           )}
                         </div>
                         {(isOwnComment || isPostOwner) && !isEditing && (
@@ -438,15 +449,20 @@ export function PostCard({ post, user }: PostCardProps) {
               );
             })}
             
-            <div className="flex gap-2">
-              <Input
-                placeholder="Adicione um comentário..."
+            <div className="flex gap-2 items-end">
+              <MentionInput
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                className="flex-1"
+                onChange={setCommentText}
+                placeholder="Adicione um comentário... (use @ para mencionar)"
+                className="flex-1 min-h-[40px]"
+                maxLength={500}
               />
-              <Button size="sm" onClick={handleAddComment} disabled={!commentText.trim()}>
+              <Button 
+                size="sm" 
+                onClick={handleAddComment} 
+                disabled={!commentText.trim()}
+                className="h-10"
+              >
                 <Send className="w-4 h-4" />
               </Button>
             </div>

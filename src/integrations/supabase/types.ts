@@ -324,6 +324,76 @@ export type Database = {
           },
         ]
       }
+      mentions: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          mentioned_by_user_id: string
+          mentioned_user_id: string
+          post_id: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          mentioned_by_user_id: string
+          mentioned_user_id: string
+          post_id?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          mentioned_by_user_id?: string
+          mentioned_user_id?: string
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentions_mentioned_by_user_id_fkey"
+            columns: ["mentioned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentions_mentioned_by_user_id_fkey"
+            columns: ["mentioned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -569,6 +639,10 @@ export type Database = {
       }
     }
     Functions: {
+      are_mutual_followers: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: boolean
+      }
       create_notification: {
         Args: {
           p_comment_id?: string
@@ -581,6 +655,15 @@ export type Database = {
         Returns: string
       }
       delete_user_account: { Args: { user_id: string }; Returns: undefined }
+      get_mutual_followers: {
+        Args: { user_id: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
