@@ -40,7 +40,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
+  const [view, setView] = useState<'initial' | 'login' | 'signup' | 'verify'>('initial');
   const [verificationCode, setVerificationCode] = useState("");
 
   // Signup fields
@@ -133,7 +133,7 @@ const Auth = () => {
       if (error) throw error;
 
       toast.success("Código enviado para seu telefone!");
-      setIsVerifyingPhone(true);
+      setView('verify');
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar conta");
     } finally {
@@ -271,6 +271,41 @@ const Auth = () => {
     return '';
   };
 
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      const validation = signupSchema.pick({ email: true, password: true }).safeParse({
+        email,
+        password,
+      });
+
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast.success(
+        selectedCountry.code === "BR" ? "Login realizado com sucesso!" :
+        selectedCountry.code === "US" ? "Login successful!" :
+        selectedCountry.code === "ES" ? "¡Inicio de sesión exitoso!" :
+        selectedCountry.code === "FR" ? "Connexion réussie!" : "Anmeldung erfolgreich!"
+      );
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao fazer login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent, action: () => void) => {
     if (e.key === 'Enter' && !loading) {
       action();
@@ -285,7 +320,103 @@ const Auth = () => {
         </div>
 
         <div className="space-y-4">
-            {!isVerifyingPhone ? (
+            {view === 'initial' ? (
+              <>
+                <div className="text-center space-y-2 mb-6">
+                  <h2 className="text-2xl font-bold">
+                    {selectedCountry.code === "BR" ? "Bem-vindo" :
+                     selectedCountry.code === "US" ? "Welcome" :
+                     selectedCountry.code === "ES" ? "Bienvenido" :
+                     selectedCountry.code === "FR" ? "Bienvenue" : "Willkommen"}
+                  </h2>
+                </div>
+                <Button onClick={() => setView('login')} className="w-full" variant="default">
+                  {selectedCountry.code === "BR" ? "Entrar" :
+                   selectedCountry.code === "US" ? "Login" :
+                   selectedCountry.code === "ES" ? "Iniciar Sesión" :
+                   selectedCountry.code === "FR" ? "Se connecter" : "Anmelden"}
+                </Button>
+                <Button onClick={() => setView('signup')} className="w-full" variant="outline">
+                  {selectedCountry.code === "BR" ? "Criar Conta" :
+                   selectedCountry.code === "US" ? "Create Account" :
+                   selectedCountry.code === "ES" ? "Crear Cuenta" :
+                   selectedCountry.code === "FR" ? "Créer un compte" : "Konto erstellen"}
+                </Button>
+              </>
+            ) : view === 'login' ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">
+                    {selectedCountry.code === "BR" ? "Senha" :
+                     selectedCountry.code === "US" ? "Password" :
+                     selectedCountry.code === "ES" ? "Contraseña" :
+                     selectedCountry.code === "FR" ? "Mot de passe" : "Passwort"}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyPress={(e) => handleKeyPress(e, handleLogin)}
+                      placeholder="********"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleLogin}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ?
+                    (selectedCountry.code === "BR" ? "Entrando..." :
+                     selectedCountry.code === "US" ? "Logging in..." :
+                     selectedCountry.code === "ES" ? "Iniciando sesión..." :
+                     selectedCountry.code === "FR" ? "Connexion..." : "Anmeldung...") :
+                    (selectedCountry.code === "BR" ? "Entrar" :
+                     selectedCountry.code === "US" ? "Login" :
+                     selectedCountry.code === "ES" ? "Iniciar Sesión" :
+                     selectedCountry.code === "FR" ? "Se connecter" : "Anmelden")
+                  }
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => setView('initial')}
+                  className="w-full"
+                >
+                  {selectedCountry.code === "BR" ? "Voltar" :
+                   selectedCountry.code === "US" ? "Back" :
+                   selectedCountry.code === "ES" ? "Volver" :
+                   selectedCountry.code === "FR" ? "Retour" : "Zurück"}
+                </Button>
+              </>
+            ) : view === 'signup' ? (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="country">País / Country</Label>
@@ -466,6 +597,17 @@ const Auth = () => {
                      selectedCountry.code === "FR" ? "Créer un compte" : "Konto erstellen")
                   }
                 </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => setView('initial')}
+                  className="w-full"
+                >
+                  {selectedCountry.code === "BR" ? "Voltar" :
+                   selectedCountry.code === "US" ? "Back" :
+                   selectedCountry.code === "ES" ? "Volver" :
+                   selectedCountry.code === "FR" ? "Retour" : "Zurück"}
+                </Button>
               </>
             ) : (
               <>
@@ -523,7 +665,7 @@ const Auth = () => {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    setIsVerifyingPhone(false);
+                    setView('signup');
                     setVerificationCode("");
                   }}
                   className="w-full"
