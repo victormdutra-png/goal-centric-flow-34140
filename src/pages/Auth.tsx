@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import prumoLogo from "@/assets/prumo-logo.png";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Globe } from "lucide-react";
 import { countries, type Country } from "@/lib/countries";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -39,10 +39,10 @@ const signupSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [view, setView] = useState<'initial' | 'login' | 'signup' | 'verify' | 'forgot'>('initial');
+  const [view, setView] = useState<'language' | 'initial' | 'login' | 'signup' | 'verify' | 'forgot'>('language');
   const [verificationCode, setVerificationCode] = useState("");
 
   // Signup fields
@@ -346,27 +346,110 @@ const Auth = () => {
         </div>
 
         <div className="space-y-4">
-            {view === 'initial' ? (
+            {view === 'language' ? (
               <>
                 <div className="text-center space-y-2 mb-6">
-                  <h2 className="text-2xl font-bold">
-                    {selectedCountry.code === "BR" ? "Bem-vindo" :
-                     selectedCountry.code === "US" ? "Welcome" :
-                     selectedCountry.code === "ES" ? "Bienvenido" :
-                     selectedCountry.code === "FR" ? "Bienvenue" : "Willkommen"}
-                  </h2>
+                  <Globe className="w-12 h-12 mx-auto text-primary" />
+                  <h2 className="text-2xl font-bold">Escolha seu idioma</h2>
+                  <p className="text-sm text-muted-foreground">Choose your language</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    onClick={() => { setLanguage('pt-BR'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇧🇷</span>
+                    <span>Português</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('en-US'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇺🇸</span>
+                    <span>English</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('es-ES'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇪🇸</span>
+                    <span>Español</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('fr-FR'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇫🇷</span>
+                    <span>Français</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('de-DE'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇩🇪</span>
+                    <span>Deutsch</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('it-IT'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇮🇹</span>
+                    <span>Italiano</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('ja-JP'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇯🇵</span>
+                    <span>日本語</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('zh-CN'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇨🇳</span>
+                    <span>中文</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('ko-KR'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇰🇷</span>
+                    <span>한국어</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('ru-RU'); setView('initial'); }} 
+                    variant="outline"
+                    className="h-auto py-4 flex-col gap-2"
+                  >
+                    <span className="text-2xl">🇷🇺</span>
+                    <span>Русский</span>
+                  </Button>
+                </div>
+              </>
+            ) : view === 'initial' ? (
+              <>
+                <Button variant="ghost" onClick={() => setView('language')} className="mb-4 w-full justify-start" size="sm">
+                  <Globe className="w-4 h-4 mr-2" />
+                  {t('back')}
+                </Button>
+                <div className="text-center space-y-2 mb-6">
+                  <h2 className="text-2xl font-bold">{t('welcome')}</h2>
                 </div>
                 <Button onClick={() => setView('login')} className="w-full" variant="default">
-                  {selectedCountry.code === "BR" ? "Entrar" :
-                   selectedCountry.code === "US" ? "Login" :
-                   selectedCountry.code === "ES" ? "Iniciar Sesión" :
-                   selectedCountry.code === "FR" ? "Se connecter" : "Anmelden"}
+                  {t('login')}
                 </Button>
                 <Button onClick={() => setView('signup')} className="w-full" variant="outline">
-                  {selectedCountry.code === "BR" ? "Criar Conta" :
-                   selectedCountry.code === "US" ? "Create Account" :
-                   selectedCountry.code === "ES" ? "Crear Cuenta" :
-                   selectedCountry.code === "FR" ? "Créer un compte" : "Konto erstellen"}
+                  {t('signup')}
                 </Button>
               </>
             ) : view === 'login' ? (
