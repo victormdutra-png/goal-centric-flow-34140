@@ -120,6 +120,42 @@ export default function Profile() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Move all calculations and useMemo hooks BEFORE early returns
+  const userGoals = user ? goals.filter((g) => g.userId === user.id) : [];
+  const userPosts = user ? posts.filter((p) => p.userId === user.id) : [];
+  const userFollowers = user ? (followers.get(user.id) || []) : [];
+  const isFollowing = user ? userFollowers.includes(currentUserId) : false;
+
+  const completedDailyQuests = dailyQuests.filter((q) => q.completed).length;
+  const completedFollowerQuests = followerQuests.filter((q) => q.completed).length;
+  const completedUniqueQuests = uniqueQuests.filter((q) => q.completed).length;
+  
+  const userActivityStreak = user ? activityStreak.get(user.id) : undefined;
+  const activityDays = userActivityStreak?.days || 0;
+
+  // Calculate FOCUS points
+  const userPointsData = user ? userPoints.get(user.id) : undefined;
+  const totalFocusFromGoals = userPointsData?.totalPoints || 0;
+  
+  // Calculate FOCUS donated to others
+  const focusDonated = useMemo(() => {
+    if (!user) return 0;
+    return posts.reduce((total, post) => {
+      if (post.donatedBy.includes(user.id)) {
+        return total + 2; // Each donation is 2 FOCUS
+      }
+      return total;
+    }, 0);
+  }, [posts, user]);
+  
+  // Calculate FOCUS from own posts (content creation)
+  const focusFromContent = useMemo(() => {
+    return userPosts.reduce((total, post) => total + post.points, 0);
+  }, [userPosts]);
+  
+  const totalFocusReceived = totalFocusFromGoals + focusFromContent;
+
+  // NOW do the early returns AFTER all hooks
   if (loading) {
     return (
       <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
@@ -135,39 +171,6 @@ export default function Profile() {
       </div>
     );
   }
-
-  const userGoals = goals.filter((g) => g.userId === user.id);
-  const userPosts = posts.filter((p) => p.userId === user.id);
-  const userFollowers = followers.get(user.id) || [];
-  const isFollowing = userFollowers.includes(currentUserId);
-
-  const completedDailyQuests = dailyQuests.filter((q) => q.completed).length;
-  const completedFollowerQuests = followerQuests.filter((q) => q.completed).length;
-  const completedUniqueQuests = uniqueQuests.filter((q) => q.completed).length;
-  
-  const userActivityStreak = activityStreak.get(user.id);
-  const activityDays = userActivityStreak?.days || 0;
-
-  // Calculate FOCUS points
-  const userPointsData = userPoints.get(user.id);
-  const totalFocusFromGoals = userPointsData?.totalPoints || 0;
-  
-  // Calculate FOCUS donated to others
-  const focusDonated = useMemo(() => {
-    return posts.reduce((total, post) => {
-      if (post.donatedBy.includes(user.id)) {
-        return total + 2; // Each donation is 2 FOCUS
-      }
-      return total;
-    }, 0);
-  }, [posts, user.id]);
-  
-  // Calculate FOCUS from own posts (content creation)
-  const focusFromContent = useMemo(() => {
-    return userPosts.reduce((total, post) => total + post.points, 0);
-  }, [userPosts]);
-  
-  const totalFocusReceived = totalFocusFromGoals + focusFromContent;
 
   const handleSupport = () => {
     if (isFollowing) {
