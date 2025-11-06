@@ -6,7 +6,7 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="px-4 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80 w-fit">
+        <Link to="/feed" className="flex items-center gap-3 transition-opacity hover:opacity-80 w-fit">
           <img 
             src={prumoLogo} 
             alt="Prumo Logo" 

@@ -6,16 +6,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 export function TabBar() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useLanguage();
 
   const tabs = [
-    { path: '/', icon: Home, label: t('feed') },
-    { path: '/explore', icon: Compass, label: t('explore') },
-    { path: '/post/new', icon: PlusCircle, label: t('new_post') },
-    { path: '/messages', icon: MessageCircle, label: t('messages') },
-    { path: '/goals', icon: Target, label: t('goals') },
-    { path: `/profile/${user?.id || '1'}`, icon: User, label: t('profile') },
+    { path: '/feed', icon: Home, label: t('feed') },
+    { path: '/explorar', icon: Compass, label: t('explore') },
+    { path: '/nova', icon: PlusCircle, label: t('new_post') },
+    { path: '/chat', icon: MessageCircle, label: t('messages') },
+    { path: '/metas', icon: Target, label: t('goals') },
+    { path: `/perfil-@${profile?.username || 'usuario'}`, icon: User, label: t('profile') },
   ];
 
   return (

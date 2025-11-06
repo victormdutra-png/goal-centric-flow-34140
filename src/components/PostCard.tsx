@@ -4,6 +4,7 @@ import { Heart, Flag, EyeOff, MessageCircle, Send, Edit, Trash2 } from 'lucide-r
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Input } from './ui/input';
 import focusCoin from '@/assets/focus-coin.png';
@@ -192,9 +193,13 @@ export function PostCard({ post, user }: PostCardProps) {
     <article className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
       {/* Header */}
       <div className="p-4 flex items-start gap-3">
-        <div className="text-2xl">{user.avatar}</div>
+        <Link to={`/perfil-@${user.username}`} className="text-2xl hover:opacity-80 transition-opacity">
+          {user.avatar}
+        </Link>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-card-foreground truncate">{user.name}</h3>
+          <Link to={`/perfil-@${user.username}`} className="hover:underline">
+            <h3 className="font-semibold text-card-foreground truncate">{user.name}</h3>
+          </Link>
           <p className="text-xs text-muted-foreground">
             {formatTimeAgo(post.createdAt)}
           </p>

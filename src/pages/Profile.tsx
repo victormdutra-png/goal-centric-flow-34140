@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +24,7 @@ import { extractMentions, validateMentions } from '@/lib/mentions';
 import { MentionText } from '@/components/MentionText';
 
 export default function Profile() {
-  const { id } = useParams<{ id: string }>();
+  const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { signOut, user: authUser, profile: authProfile } = useAuth();
   const {
@@ -48,11 +48,39 @@ export default function Profile() {
     userPoints,
   } = useAppStore();
 
-  // Use real Supabase data if viewing own profile, otherwise use store data
-  const storeUser = users.find((u) => u.id === id);
-  const isOwnProfile = authUser?.id === id;
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch profile by username
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!username) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', username)
+          .single();
+
+        if (error) throw error;
+        setProfileData(data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setProfileData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [username]);
+
+  // Use real Supabase data if viewing own profile, otherwise use fetched profile data
+  const isOwnProfile = authUser?.id === profileData?.id;
   
-  // Map Supabase profile to User type for own profile
+  // Map Supabase profile to User type
   const user = isOwnProfile && authProfile ? {
     id: authProfile.id,
     name: authProfile.full_name,
@@ -60,7 +88,14 @@ export default function Profile() {
     avatar: authProfile.avatar_url || '👤',
     bio: authProfile.bio || '',
     streakDays: 0,
-  } : storeUser;
+  } : profileData ? {
+    id: profileData.id,
+    name: profileData.full_name,
+    username: profileData.username,
+    avatar: profileData.avatar_url || '👤',
+    bio: profileData.bio || '',
+    streakDays: 0,
+  } : null;
 
   const [editingPhoto, setEditingPhoto] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -81,6 +116,14 @@ export default function Profile() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('pt-BR');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -375,7 +418,7 @@ export default function Profile() {
                     {isFollowing ? 'Seguindo' : 'Seguir'}
                   </Button>
                   <Button 
-                    onClick={() => navigate(`/messages?user=${id}`)} 
+                    onClick={() => navigate(`/chat?user=${user.id}`)} 
                     className="w-full" 
                     size="sm" 
                     variant="outline"

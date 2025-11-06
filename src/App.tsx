@@ -59,7 +59,7 @@ const App = () => {
               <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route
-                path="/"
+                path="/feed"
                 element={
                   <ProtectedRoute>
                     <div className="relative">
@@ -70,7 +70,11 @@ const App = () => {
                 }
               />
               <Route
-                path="/explore"
+                path="/"
+                element={<Navigate to="/feed" replace />}
+              />
+              <Route
+                path="/explorar"
                 element={
                   <ProtectedRoute>
                     <div className="relative">
@@ -80,8 +84,10 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              {/* Redirect old explore route to new one */}
+              <Route path="/explore" element={<Navigate to="/explorar" replace />} />
               <Route
-                path="/post/new"
+                path="/nova"
                 element={
                   <ProtectedRoute>
                     <div className="relative">
@@ -91,8 +97,10 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              {/* Redirect old post/new route to new one */}
+              <Route path="/post/new" element={<Navigate to="/nova" replace />} />
               <Route
-                path="/messages"
+                path="/chat"
                 element={
                   <ProtectedRoute>
                     <div className="relative">
@@ -102,8 +110,10 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              {/* Redirect old messages route to new one */}
+              <Route path="/messages" element={<Navigate to="/chat" replace />} />
               <Route
-                path="/goals"
+                path="/metas"
                 element={
                   <ProtectedRoute>
                     <div className="relative">
@@ -113,8 +123,10 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              {/* Redirect old goals route to new one */}
+              <Route path="/goals" element={<Navigate to="/metas" replace />} />
               <Route
-                path="/profile/:id"
+                path="/perfil-@:username"
                 element={
                   <ProtectedRoute>
                     <div className="relative">
@@ -124,6 +136,8 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              {/* Redirect old profile route - Note: this won't work perfectly as ID != username */}
+              <Route path="/profile/:id" element={<Navigate to="/feed" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </AuthProvider>

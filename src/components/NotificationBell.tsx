@@ -49,10 +49,13 @@ export const NotificationBell = () => {
     
     if (notification.post_id) {
       // Navigate to the post - for now just go to feed
-      navigate('/');
+      navigate('/feed');
     } else if (notification.type === 'follow') {
-      // Navigate to the follower's profile
-      navigate(`/profile/${notification.from_user_id}`);
+      // Navigate to the follower's profile using username
+      const profile = profiles.get(notification.from_user_id);
+      if (profile?.username) {
+        navigate(`/perfil-@${profile.username}`);
+      }
     }
   };
 

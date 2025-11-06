@@ -247,7 +247,7 @@ const Auth = () => {
       if (error) throw error;
 
       toast.success(t('login_success'));
-      navigate("/");
+      navigate("/feed");
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
     } finally {
