@@ -42,7 +42,7 @@ const Auth = () => {
   const { t, language, setLanguage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [view, setView] = useState<'language' | 'initial' | 'login' | 'signup' | 'forgot'>('language');
+  const [view, setView] = useState<'initial' | 'login' | 'signup' | 'forgot'>('initial');
 
   // Signup fields
   const [selectedCountry, setSelectedCountry] = useState<Country>(countries[0]);
@@ -293,101 +293,8 @@ const Auth = () => {
         </div>
 
         <div className="space-y-4">
-            {view === 'language' ? (
+            {view === 'initial' ? (
               <>
-                <div className="text-center space-y-2 mb-6">
-                  <Globe className="w-12 h-12 mx-auto text-primary" />
-                  <h2 className="text-2xl font-bold">{t('choose_language')}</h2>
-                </div>
-                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
-                  <Button 
-                    onClick={() => { setLanguage('zh-CN'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇨🇳</span>
-                    <span className="text-base font-medium">中文 (简体)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('de-DE'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇩🇪</span>
-                    <span className="text-base font-medium">Deutsch (Deutschland)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('en-US'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇺🇸</span>
-                    <span className="text-base font-medium">English (United States)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('es-ES'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇪🇸</span>
-                    <span className="text-base font-medium">Español (España)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('fr-FR'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇫🇷</span>
-                    <span className="text-base font-medium">Français (France)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('it-IT'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇮🇹</span>
-                    <span className="text-base font-medium">Italiano (Italia)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('ko-KR'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇰🇷</span>
-                    <span className="text-base font-medium">한국어 (대한민국)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('pt-BR'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇧🇷</span>
-                    <span className="text-base font-medium">Português (Brasil)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('ru-RU'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇷🇺</span>
-                    <span className="text-base font-medium">Русский (Россия)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('ja-JP'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇯🇵</span>
-                    <span className="text-base font-medium">日本語 (日本)</span>
-                  </Button>
-                </div>
-              </>
-            ) : view === 'initial' ? (
-              <>
-                <Button variant="ghost" onClick={() => setView('language')} className="mb-4 w-full justify-start" size="sm">
-                  <Globe className="w-4 h-4 mr-2" />
-                  {t('back')}
-                </Button>
                 <div className="text-center space-y-2 mb-6">
                   <h2 className="text-2xl font-bold">{t('welcome')}</h2>
                 </div>
