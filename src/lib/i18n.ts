@@ -51,6 +51,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': 'Email de recuperação enviado! Verifique sua caixa de entrada.',
     'show_password': 'Mostrar senha',
     'hide_password': 'Ocultar senha',
+    'check_email_confirmation': 'Verifique seu e-mail para confirmar sua conta!',
   },
   'en-US': {
     'feed': 'Feed',
@@ -89,6 +90,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': 'Recovery email sent! Check your inbox.',
     'show_password': 'Show password',
     'hide_password': 'Hide password',
+    'check_email_confirmation': 'Check your email to confirm your account!',
   },
   'es-ES': {
     'feed': 'Inicio',
@@ -127,6 +129,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': '¡Correo de recuperación enviado! Verifica tu bandeja.',
     'show_password': 'Mostrar contraseña',
     'hide_password': 'Ocultar contraseña',
+    'check_email_confirmation': '¡Verifica tu correo para confirmar tu cuenta!',
   },
   'fr-FR': {
     'feed': 'Fil',
@@ -165,6 +168,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': 'E-mail de récupération envoyé! Vérifiez votre boîte de réception.',
     'show_password': 'Afficher le mot de passe',
     'hide_password': 'Masquer le mot de passe',
+    'check_email_confirmation': 'Vérifiez votre e-mail pour confirmer votre compte!',
   },
   'de-DE': {
     'feed': 'Feed',
@@ -203,6 +207,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': 'Wiederherstellungs-E-Mail gesendet! Überprüfen Sie Ihren Posteingang.',
     'show_password': 'Passwort anzeigen',
     'hide_password': 'Passwort verbergen',
+    'check_email_confirmation': 'Überprüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen!',
   },
   'it-IT': {
     'feed': 'Feed',
@@ -241,6 +246,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': 'Email di recupero inviata! Controlla la tua casella di posta.',
     'show_password': 'Mostra password',
     'hide_password': 'Nascondi password',
+    'check_email_confirmation': 'Controlla la tua email per confermare il tuo account!',
   },
   'ja-JP': {
     'feed': 'フィード',
@@ -279,6 +285,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': '回復メールを送信しました！受信トレイを確認してください。',
     'show_password': 'パスワードを表示',
     'hide_password': 'パスワードを非表示',
+    'check_email_confirmation': 'アカウントを確認するためにメールをチェックしてください！',
   },
   'zh-CN': {
     'feed': '动态',
@@ -317,6 +324,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': '恢复邮件已发送！请检查您的收件箱。',
     'show_password': '显示密码',
     'hide_password': '隐藏密码',
+    'check_email_confirmation': '请检查您的电子邮件以确认您的帐户！',
   },
   'ko-KR': {
     'feed': '피드',
@@ -355,6 +363,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': '복구 이메일이 전송되었습니다! 받은 편지함을 확인하세요.',
     'show_password': '비밀번호 표시',
     'hide_password': '비밀번호 숨기기',
+    'check_email_confirmation': '계정을 확인하려면 이메일을 확인하세요!',
   },
   'ru-RU': {
     'feed': 'Лента',
@@ -393,6 +402,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'reset_email_sent': 'Письмо для восстановления отправлено! Проверьте вашу почту.',
     'show_password': 'Показать пароль',
     'hide_password': 'Скрыть пароль',
+    'check_email_confirmation': 'Проверьте свою электронную почту, чтобы подтвердить учетную запись!',
   },
 };
 

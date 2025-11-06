@@ -18,6 +18,7 @@ const signupSchema = z.object({
   username: z.string().min(3, "Usuário deve ter no mínimo 3 caracteres"),
   fullName: z.string().min(3, "Nome completo é obrigatório"),
   email: z.string().email("Email inválido"),
+  phone: z.string().min(8, "Telefone inválido"),
   birthDate: z.string().refine((date) => {
     const birth = new Date(date);
     const today = new Date();
@@ -47,6 +48,7 @@ const Auth = () => {
   const [selectedCountry, setSelectedCountry] = useState<Country>(countries[0]);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [birthDateDisplay, setBirthDateDisplay] = useState("");
@@ -60,6 +62,7 @@ const Auth = () => {
         username,
         fullName,
         email,
+        phone: phone.replace(/\D/g, ''),
         birthDate,
         password,
       });
@@ -96,6 +99,20 @@ const Auth = () => {
         return;
       }
 
+      // Check if phone exists
+      const fullPhone = `${selectedCountry.phoneCode}${phone.replace(/\D/g, '')}`;
+      const { data: existingPhone } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("phone", fullPhone)
+        .maybeSingle();
+
+      if (existingPhone) {
+        toast.error(t('phone_exists'));
+        setLoading(false);
+        return;
+      }
+
       // Sign up with email
       const { error } = await supabase.auth.signUp({
         email,
@@ -105,7 +122,7 @@ const Auth = () => {
           data: {
             username,
             full_name: fullName,
-            phone: '', // Empty phone for database compatibility
+            phone: fullPhone,
             birth_date: birthDate,
           },
         },
@@ -113,8 +130,8 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success(t('account_created'));
-      navigate("/");
+      toast.success(t('check_email_confirmation'));
+      setView('login');
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar conta");
     } finally {
@@ -515,6 +532,22 @@ const Auth = () => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">{t('phone')}</Label>
+                  <div className="flex gap-2">
+                    <div className="w-20 flex items-center justify-center border rounded-md bg-muted">
+                      <span className="text-sm font-medium">{selectedCountry.phoneCode}</span>
+                    </div>
+                    <Input
+                      id="phone"
+                      value={phone}
+                      onChange={(e) => setPhone(formatPhone(e.target.value, selectedCountry))}
+                      placeholder={selectedCountry.phonePlaceholder}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
