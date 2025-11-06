@@ -561,10 +561,6 @@ const Auth = () => {
                     id="fullName"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder={selectedCountry.code === "BR" ? "João Silva" : 
-                                 selectedCountry.code === "US" ? "John Smith" :
-                                 selectedCountry.code === "ES" ? "Juan García" :
-                                 selectedCountry.code === "FR" ? "Jean Dupont" : "Hans Schmidt"}
                   />
                 </div>
 
