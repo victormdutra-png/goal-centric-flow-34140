@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { Post, Goal, User, UserPoints, Comment } from '@/lib/types';
+import { Post, Goal, User, UserPoints, Comment, PostKind } from '@/lib/types';
 import { users as initialUsers, goals as initialGoals } from '@/lib/fixtures';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface DailyQuest {
   id: string;
@@ -274,20 +275,19 @@ export const useAppStore = create<AppState>((set, get) => ({
         const posts = data.map((post: any) => ({
           id: post.id,
           userId: post.user_id,
-          kind: post.kind,
-          mediaUrl: post.media_url,
-          caption: post.caption,
+          kind: post.type as PostKind, // Database column is 'type' not 'kind'
+          mediaUrl: post.image_url, // Database column is 'image_url' not 'media_url'
+          caption: post.content, // Database column is 'content' not 'caption'
           theme: post.theme,
-          musicUrl: post.music_url,
-          likes: post.likes || 0,
-          comments: post.comments || [],
-          donations: post.donations || 0,
-          points: post.points || 0,
+          musicUrl: post.music_name, // Database has 'music_name' for music URL
+          likes: 0, // Likes are tracked in separate table
+          comments: [], // Comments are tracked in separate table
+          points: 0, // Calculate from donations table
           createdAt: new Date(post.created_at),
-          quizTheme: post.quiz_theme,
-          quizQuestions: post.quiz_questions,
-          likedBy: post.liked_by || [],
-          donatedBy: post.donated_by || [],
+          quizTheme: post.theme, // Use theme as quiz theme
+          quizQuestions: undefined, // Quiz data not in posts table
+          likedBy: [], // Load from likes table
+          donatedBy: [], // Load from donations table
         }));
         set({ posts });
       }
@@ -325,7 +325,34 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
   
-  addPost: (post) =>
+  addPost: async (post) => {
+    // Save to Supabase first
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .insert({
+          id: post.id,
+          user_id: post.userId,
+          type: post.kind, // Database column is 'type' not 'kind'
+          image_url: post.mediaUrl, // Database column is 'image_url'
+          content: post.caption || '', // Database column is 'content', must not be null
+          theme: post.theme,
+          music_name: post.musicUrl, // Database column is 'music_name'
+          created_at: post.createdAt.toISOString(),
+        });
+      
+      if (error) {
+        console.error('Error saving post to database:', error);
+        toast.error('Erro ao salvar publicação');
+        return;
+      }
+    } catch (error) {
+      console.error('Error saving post:', error);
+      toast.error('Erro ao criar publicação');
+      return;
+    }
+    
+    // Then update local state
     set((state) => {
       const newPosts = [post, ...state.posts];
       const newUniqueQuests = [...state.uniqueQuests];
@@ -360,7 +387,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       return { posts: newPosts, uniqueQuests: newUniqueQuests, monthlyQuests: newMonthlyQuests };
-    }),
+    });
+  },
 
   updatePost: (postId, updates) =>
     set((state) => ({

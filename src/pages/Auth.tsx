@@ -8,11 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import prumoLogo from "@/assets/prumo-logo.png";
+import prumoLogoDark from "@/assets/prumo-logo-dark.png";
+import prumoLogoLight from "@/assets/prumo-logo-light.png";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { Eye, EyeOff, Globe } from "lucide-react";
 import { countries, type Country } from "@/lib/countries";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppStore } from "@/store/useAppStore";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Usuário deve ter no mínimo 3 caracteres"),
@@ -40,6 +42,7 @@ const signupSchema = z.object({
 const Auth = () => {
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
+  const { isDarkMode } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [view, setView] = useState<'initial' | 'login' | 'signup' | 'forgot'>('initial');
@@ -289,7 +292,11 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md p-6">
         <div className="flex justify-center mb-6">
-          <img src={prumoLogo} alt="Prumo" className="h-16" />
+          <img 
+            src={isDarkMode ? prumoLogoLight : prumoLogoDark} 
+            alt="Prumo" 
+            className="h-16" 
+          />
         </div>
 
         <div className="space-y-4">
@@ -304,7 +311,7 @@ const Auth = () => {
                 <Button onClick={() => setView('signup')} className="w-full" variant="outline">
                   {t('signup')}
                 </Button>
-                <Button onClick={() => setView('forgot')} className="w-full" variant="ghost">
+                <Button onClick={() => setView('forgot')} className="w-full text-xs" variant="ghost">
                   {t('forgot_password')}
                 </Button>
               </>
