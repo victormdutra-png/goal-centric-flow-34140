@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card } from '@/components/ui/card';
 import { Header } from '@/components/Header';
-import { Flame, Heart, Camera, Users, Trophy, Settings, ChevronRight, Trash2, Edit, MessageCircle, Bell, Globe } from 'lucide-react';
+import { Flame, Heart, Camera, Users, Trophy, Settings, ChevronRight, Trash2, Edit, MessageCircle, Bell, Globe, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import focusCoin from '@/assets/focus-coin.png';
 import { languages, Language } from '@/lib/i18n';
@@ -63,6 +63,7 @@ export default function Profile() {
   } : storeUser;
 
   const [editingPhoto, setEditingPhoto] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
   const [showFollowers, setShowFollowers] = useState(false);
@@ -140,6 +141,7 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setUploadingPhoto(true);
     try {
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
@@ -167,10 +169,12 @@ export default function Profile() {
       toast.success('Foto atualizada!');
       setEditingPhoto(false);
       
-      // Reload page to show new avatar
+      // Refresh auth profile to show new avatar
       window.location.reload();
     } catch (error: any) {
       toast.error('Erro ao atualizar foto: ' + error.message);
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -309,8 +313,13 @@ export default function Profile() {
                         variant="outline"
                         className="absolute -bottom-2 -right-2 h-8 w-8 p-0 rounded-full"
                         onClick={handlePhotoEdit}
+                        disabled={uploadingPhoto}
                       >
-                        <Camera className="w-4 h-4" />
+                        {uploadingPhoto ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Camera className="w-4 h-4" />
+                        )}
                       </Button>
                       <input
                         ref={fileInputRef}
@@ -318,6 +327,7 @@ export default function Profile() {
                         accept="image/*"
                         className="hidden"
                         onChange={handlePhotoSelect}
+                        disabled={uploadingPhoto}
                       />
                     </>
                   )}
