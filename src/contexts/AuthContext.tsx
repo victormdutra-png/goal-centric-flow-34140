@@ -37,42 +37,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        // Only synchronous state updates here
         setSession(session);
         setUser(session?.user ?? null);
-
+        
+        // Defer Supabase calls with setTimeout to prevent deadlock
         if (session?.user) {
-          // Fetch profile data
+          setTimeout(async () => {
+            try {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", session.user.id)
+                .maybeSingle();
+              
+              setProfile(profileData);
+              setLoading(false);
+            } catch (error) {
+              console.error('Error fetching profile:', error);
+              setLoading(false);
+            }
+          }, 0);
+        } else {
+          setProfile(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        try {
           const { data: profileData } = await supabase
             .from("profiles")
             .select("*")
             .eq("id", session.user.id)
             .maybeSingle();
-
+          
           setProfile(profileData);
-        } else {
-          setProfile(null);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          setLoading(false);
         }
-
-        setLoading(false);
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle()
-          .then(({ data: profileData }) => {
-            setProfile(profileData);
-            setLoading(false);
-          });
       } else {
         setLoading(false);
       }
