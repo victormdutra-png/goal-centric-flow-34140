@@ -2,18 +2,20 @@ import { Home, Compass, PlusCircle, Target, User, MessageCircle } from 'lucide-r
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function TabBar() {
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const tabs = [
-    { path: '/', icon: Home, label: 'Feed' },
-    { path: '/explore', icon: Compass, label: 'Explorar' },
-    { path: '/post/new', icon: PlusCircle, label: 'Nova' },
-    { path: '/messages', icon: MessageCircle, label: 'Chat' },
-    { path: '/goals', icon: Target, label: 'Metas' },
-    { path: `/profile/${user?.id || '1'}`, icon: User, label: 'Perfil' },
+    { path: '/', icon: Home, label: t('feed') },
+    { path: '/explore', icon: Compass, label: t('explore') },
+    { path: '/post/new', icon: PlusCircle, label: t('new_post') },
+    { path: '/messages', icon: MessageCircle, label: t('messages') },
+    { path: '/goals', icon: Target, label: t('goals') },
+    { path: `/profile/${user?.id || '1'}`, icon: User, label: t('profile') },
   ];
 
   return (

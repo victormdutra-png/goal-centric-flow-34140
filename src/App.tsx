@@ -7,6 +7,7 @@ import { TabBar } from "@/components/TabBar";
 import { useAppStore } from "@/store/useAppStore";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Feed from "./pages/Feed";
 import Explore from "./pages/Explore";
 import NewPost from "./pages/NewPost";
@@ -53,8 +54,9 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <Routes>
+          <LanguageProvider>
+            <AuthProvider>
+              <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route
                 path="/"
@@ -124,7 +126,8 @@ const App = () => {
               />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </AuthProvider>
+            </AuthProvider>
+          </LanguageProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
