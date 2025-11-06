@@ -12,6 +12,7 @@ import prumoLogo from "@/assets/prumo-logo.png";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { Eye, EyeOff } from "lucide-react";
 import { countries, type Country } from "@/lib/countries";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Usuário deve ter no mínimo 3 caracteres"),
@@ -38,9 +39,10 @@ const signupSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [view, setView] = useState<'initial' | 'login' | 'signup' | 'verify'>('initial');
+  const [view, setView] = useState<'initial' | 'login' | 'signup' | 'verify' | 'forgot'>('initial');
   const [verificationCode, setVerificationCode] = useState("");
 
   // Signup fields
@@ -306,9 +308,27 @@ const Auth = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent, action: () => void) => {
-    if (e.key === 'Enter' && !loading) {
-      action();
+  const handleForgotPassword = async () => {
+    setLoading(true);
+    try {
+      if (!email) {
+        toast.error(t('email') + ' é obrigatório');
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+
+      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      setView('login');
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao enviar email de recuperação');
+    } finally {
+      setLoading(false);
     }
   };
 

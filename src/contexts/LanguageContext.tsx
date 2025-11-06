@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Language, translate } from "@/lib/i18n";
 import { countries } from "@/lib/countries";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./AuthContext";
 
 interface LanguageContextType {
   language: Language;
@@ -44,9 +46,18 @@ const countryToLanguageMap: Record<string, Language> = {
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('pt-BR');
   const [detectedCountryCode, setDetectedCountryCode] = useState<string | null>(null);
+  const { user, profile } = useAuth();
 
+  // Load language from user profile or detect location
   useEffect(() => {
     const detectLocation = async () => {
+      // If user is logged in and has a language preference, use it
+      if (profile?.language) {
+        setLanguage(profile.language as Language);
+        localStorage.setItem('app-language', profile.language);
+        return;
+      }
+
       // Check if language is already saved in localStorage
       const savedLanguage = localStorage.getItem('app-language') as Language;
       if (savedLanguage) {
@@ -58,7 +69,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       if ('geolocation' in navigator) {
         try {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
           });
 
           // Use a geocoding API to get country from coordinates
@@ -75,6 +86,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
             const detectedLanguage = countryToLanguageMap[countryCode] || 'pt-BR';
             setLanguage(detectedLanguage);
             localStorage.setItem('app-language', detectedLanguage);
+            
+            // Save to profile if user is logged in
+            if (user?.id) {
+              await supabase
+                .from('profiles')
+                .update({ language: detectedLanguage })
+                .eq('id', user.id);
+            }
             return;
           }
         } catch (error) {
@@ -96,11 +115,19 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     };
 
     detectLocation();
-  }, []);
+  }, [user, profile]);
 
-  const handleSetLanguage = (lang: Language) => {
+  const handleSetLanguage = async (lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('app-language', lang);
+    
+    // Save to user profile if logged in
+    if (user?.id) {
+      await supabase
+        .from('profiles')
+        .update({ language: lang })
+        .eq('id', user.id);
+    }
   };
 
   const t = (key: string) => translate(key, language);
