@@ -18,7 +18,6 @@ const signupSchema = z.object({
   username: z.string().min(3, "Usuário deve ter no mínimo 3 caracteres"),
   fullName: z.string().min(3, "Nome completo é obrigatório"),
   email: z.string().email("Email inválido"),
-  phone: z.string().min(10, "Telefone inválido"),
   birthDate: z.string().refine((date) => {
     const birth = new Date(date);
     const today = new Date();
@@ -42,15 +41,13 @@ const Auth = () => {
   const { t, language, setLanguage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [view, setView] = useState<'language' | 'initial' | 'login' | 'signup' | 'verify' | 'forgot'>('language');
-  const [verificationCode, setVerificationCode] = useState("");
+  const [view, setView] = useState<'language' | 'initial' | 'login' | 'signup' | 'forgot'>('language');
 
   // Signup fields
   const [selectedCountry, setSelectedCountry] = useState<Country>(countries[0]);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [birthDateDisplay, setBirthDateDisplay] = useState("");
   const [password, setPassword] = useState("");
@@ -63,7 +60,6 @@ const Auth = () => {
         username,
         fullName,
         email,
-        phone,
         birthDate,
         password,
       });
@@ -100,33 +96,16 @@ const Auth = () => {
         return;
       }
 
-      // Check if phone exists
-      const { data: existingPhone } = await supabase
-        .from("profiles")
-        .select("phone")
-        .eq("phone", phone)
-        .maybeSingle();
-
-      if (existingPhone) {
-        toast.error(t('phone_exists'));
-        setLoading(false);
-        return;
-      }
-
-      // Format phone to E.164 format
-      const formattedPhone = phone.replace(/\D/g, '');
-      const phoneWithCountry = `${selectedCountry.phoneCode}${formattedPhone}`;
-
-      // Sign up with phone verification
+      // Sign up with email
       const { error } = await supabase.auth.signUp({
-        phone: phoneWithCountry,
+        email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             username,
             full_name: fullName,
-            email,
-            phone,
+            phone: '', // Empty phone for database compatibility
             birth_date: birthDate,
           },
         },
@@ -134,33 +113,10 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success(t('code_sent'));
-      setView('verify');
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao criar conta");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    setLoading(true);
-    try {
-      const formattedPhone = phone.replace(/\D/g, '');
-      const phoneWithCountry = `${selectedCountry.phoneCode}${formattedPhone}`;
-
-      const { error } = await supabase.auth.verifyOtp({
-        phone: phoneWithCountry,
-        token: verificationCode,
-        type: 'sms',
-      });
-
-      if (error) throw error;
-
       toast.success(t('account_created'));
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || t('invalid_code'));
+      toast.error(error.message || "Erro ao criar conta");
     } finally {
       setLoading(false);
     }
@@ -516,7 +472,6 @@ const Auth = () => {
                       const country = countries.find((c) => c.code === value);
                       if (country) {
                         setSelectedCountry(country);
-                        setPhone("");
                         setBirthDate("");
                         setBirthDateDisplay("");
                       }
@@ -527,7 +482,6 @@ const Auth = () => {
                         <span className="flex items-center gap-2">
                           <span className="text-xl">{selectedCountry.flag}</span>
                           <span>{selectedCountry.name}</span>
-                          <span className="text-muted-foreground">({selectedCountry.phoneCode})</span>
                         </span>
                       </SelectValue>
                     </SelectTrigger>
@@ -537,7 +491,6 @@ const Auth = () => {
                           <span className="flex items-center gap-2">
                             <span className="text-xl">{country.flag}</span>
                             <span>{country.name}</span>
-                            <span className="text-muted-foreground">({country.phoneCode})</span>
                           </span>
                         </SelectItem>
                       ))}
@@ -573,26 +526,6 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t('phone')}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={selectedCountry.phoneCode}
-                      disabled
-                      className="w-20"
-                    />
-                    <Input
-                      id="phone"
-                      value={phone}
-                      onChange={(e) => {
-                        const formatted = formatPhone(e.target.value, selectedCountry);
-                        setPhone(formatted);
-                      }}
-                      placeholder={selectedCountry.phonePlaceholder}
-                    />
-                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -653,47 +586,6 @@ const Auth = () => {
                 <Button
                   variant="ghost"
                   onClick={() => setView('initial')}
-                  className="w-full"
-                >
-                  {t('back')}
-                </Button>
-              </>
-            ) : view === 'verify' ? (
-              <>
-                <div className="text-center space-y-2 mb-4">
-                  <h3 className="text-lg font-semibold">{t('verification_code')}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t('enter_verification_code')}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="verificationCode">{t('verification_code')}</Label>
-                  <Input
-                    id="verificationCode"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    onKeyPress={(e) => handleKeyPress(e, handleVerifyCode)}
-                    placeholder="000000"
-                    maxLength={6}
-                    className="text-center text-2xl tracking-widest"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleVerifyCode}
-                  disabled={loading || verificationCode.length !== 6}
-                  className="w-full"
-                >
-                  {loading ? t('loading') : t('verify_code')}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setView('signup');
-                    setVerificationCode("");
-                  }}
                   className="w-full"
                 >
                   {t('back')}
