@@ -273,6 +273,15 @@ export default function Profile() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error: any) {
+      toast.error('Erro ao sair: ' + error.message);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     try {
       const { error } = await supabase.rpc('delete_user_account', { user_id: user.id });
@@ -280,7 +289,8 @@ export default function Profile() {
       if (error) throw error;
 
       toast.success('Conta excluída com sucesso');
-      signOut();
+      await signOut();
+      navigate('/auth');
     } catch (error: any) {
       toast.error('Erro ao excluir conta: ' + error.message);
     }
@@ -669,8 +679,11 @@ export default function Profile() {
               </>
             )}
 
-            <div className="p-3 bg-card rounded-lg border border-border">
-              <div className="flex items-center justify-between cursor-pointer" onClick={signOut}>
+            <div 
+              className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:bg-destructive/10"
+              onClick={handleSignOut}
+            >
+              <div className="flex items-center justify-between">
                 <span className="text-sm text-destructive">Sair</span>
                 <ChevronRight className="w-4 h-4 text-destructive" />
               </div>
