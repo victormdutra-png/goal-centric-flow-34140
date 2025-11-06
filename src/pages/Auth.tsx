@@ -82,7 +82,7 @@ const Auth = () => {
         .maybeSingle();
 
       if (existingUser) {
-        toast.error("Usuário já existe");
+        toast.error(t('user_exists'));
         setLoading(false);
         return;
       }
@@ -95,7 +95,7 @@ const Auth = () => {
         .maybeSingle();
 
       if (existingEmail) {
-        toast.error("Email já cadastrado");
+        toast.error(t('email_exists'));
         setLoading(false);
         return;
       }
@@ -108,7 +108,7 @@ const Auth = () => {
         .maybeSingle();
 
       if (existingPhone) {
-        toast.error("Telefone já cadastrado");
+        toast.error(t('phone_exists'));
         setLoading(false);
         return;
       }
@@ -134,7 +134,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("Código enviado para seu telefone!");
+      toast.success(t('code_sent'));
       setView('verify');
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar conta");
@@ -157,10 +157,10 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("Conta criada com sucesso!");
+      toast.success(t('account_created'));
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "Código inválido");
+      toast.error(error.message || t('invalid_code'));
     } finally {
       setLoading(false);
     }
@@ -294,12 +294,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success(
-        selectedCountry.code === "BR" ? "Login realizado com sucesso!" :
-        selectedCountry.code === "US" ? "Login successful!" :
-        selectedCountry.code === "ES" ? "¡Inicio de sesión exitoso!" :
-        selectedCountry.code === "FR" ? "Connexion réussie!" : "Anmeldung erfolgreich!"
-      );
+      toast.success(t('login_success'));
       navigate("/");
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
@@ -323,7 +318,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      toast.success(t('reset_email_sent'));
       setView('login');
     } catch (error: any) {
       toast.error(error.message || 'Erro ao enviar email de recuperação');
@@ -350,17 +345,24 @@ const Auth = () => {
               <>
                 <div className="text-center space-y-2 mb-6">
                   <Globe className="w-12 h-12 mx-auto text-primary" />
-                  <h2 className="text-2xl font-bold">Escolha seu idioma</h2>
-                  <p className="text-sm text-muted-foreground">Choose your language</p>
+                  <h2 className="text-2xl font-bold">{t('choose_language')}</h2>
                 </div>
                 <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
                   <Button 
-                    onClick={() => { setLanguage('pt-BR'); setView('initial'); }} 
+                    onClick={() => { setLanguage('zh-CN'); setView('initial'); }} 
                     variant="outline"
                     className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
-                    <span className="text-3xl">🇧🇷</span>
-                    <span className="text-base font-medium">Português (Brasil)</span>
+                    <span className="text-3xl">🇨🇳</span>
+                    <span className="text-base font-medium">中文 (简体)</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('de-DE'); setView('initial'); }} 
+                    variant="outline"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
+                  >
+                    <span className="text-3xl">🇩🇪</span>
+                    <span className="text-base font-medium">Deutsch (Deutschland)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('en-US'); setView('initial'); }} 
@@ -387,36 +389,12 @@ const Auth = () => {
                     <span className="text-base font-medium">Français (France)</span>
                   </Button>
                   <Button 
-                    onClick={() => { setLanguage('de-DE'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇩🇪</span>
-                    <span className="text-base font-medium">Deutsch (Deutschland)</span>
-                  </Button>
-                  <Button 
                     onClick={() => { setLanguage('it-IT'); setView('initial'); }} 
                     variant="outline"
                     className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
                     <span className="text-3xl">🇮🇹</span>
                     <span className="text-base font-medium">Italiano (Italia)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('ja-JP'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇯🇵</span>
-                    <span className="text-base font-medium">日本語 (日本)</span>
-                  </Button>
-                  <Button 
-                    onClick={() => { setLanguage('zh-CN'); setView('initial'); }} 
-                    variant="outline"
-                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <span className="text-3xl">🇨🇳</span>
-                    <span className="text-base font-medium">中文 (简体)</span>
                   </Button>
                   <Button 
                     onClick={() => { setLanguage('ko-KR'); setView('initial'); }} 
@@ -427,12 +405,28 @@ const Auth = () => {
                     <span className="text-base font-medium">한국어 (대한민국)</span>
                   </Button>
                   <Button 
+                    onClick={() => { setLanguage('pt-BR'); setView('initial'); }} 
+                    variant="outline"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
+                  >
+                    <span className="text-3xl">🇧🇷</span>
+                    <span className="text-base font-medium">Português (Brasil)</span>
+                  </Button>
+                  <Button 
                     onClick={() => { setLanguage('ru-RU'); setView('initial'); }} 
                     variant="outline"
                     className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
                   >
                     <span className="text-3xl">🇷🇺</span>
                     <span className="text-base font-medium">Русский (Россия)</span>
+                  </Button>
+                  <Button 
+                    onClick={() => { setLanguage('ja-JP'); setView('initial'); }} 
+                    variant="outline"
+                    className="w-full h-auto py-4 justify-start gap-3 hover:bg-primary hover:text-primary-foreground transition-all"
+                  >
+                    <span className="text-3xl">🇯🇵</span>
+                    <span className="text-base font-medium">日本語 (日本)</span>
                   </Button>
                 </div>
               </>
@@ -451,11 +445,14 @@ const Auth = () => {
                 <Button onClick={() => setView('signup')} className="w-full" variant="outline">
                   {t('signup')}
                 </Button>
+                <Button onClick={() => setView('forgot')} className="w-full" variant="ghost">
+                  {t('forgot_password')}
+                </Button>
               </>
             ) : view === 'login' ? (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -466,12 +463,7 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">
-                    {selectedCountry.code === "BR" ? "Senha" :
-                     selectedCountry.code === "US" ? "Password" :
-                     selectedCountry.code === "ES" ? "Contraseña" :
-                     selectedCountry.code === "FR" ? "Mot de passe" : "Passwort"}
-                  </Label>
+                  <Label htmlFor="password">{t('password')}</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -487,6 +479,7 @@ const Auth = () => {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? t('hide_password') : t('show_password')}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -502,16 +495,7 @@ const Auth = () => {
                   disabled={loading}
                   className="w-full"
                 >
-                  {loading ?
-                    (selectedCountry.code === "BR" ? "Entrando..." :
-                     selectedCountry.code === "US" ? "Logging in..." :
-                     selectedCountry.code === "ES" ? "Iniciando sesión..." :
-                     selectedCountry.code === "FR" ? "Connexion..." : "Anmeldung...") :
-                    (selectedCountry.code === "BR" ? "Entrar" :
-                     selectedCountry.code === "US" ? "Login" :
-                     selectedCountry.code === "ES" ? "Iniciar Sesión" :
-                     selectedCountry.code === "FR" ? "Se connecter" : "Anmelden")
-                  }
+                  {loading ? t('loading') : t('login')}
                 </Button>
 
                 <Button
@@ -519,16 +503,13 @@ const Auth = () => {
                   onClick={() => setView('initial')}
                   className="w-full"
                 >
-                  {selectedCountry.code === "BR" ? "Voltar" :
-                   selectedCountry.code === "US" ? "Back" :
-                   selectedCountry.code === "ES" ? "Volver" :
-                   selectedCountry.code === "FR" ? "Retour" : "Zurück"}
+                  {t('back')}
                 </Button>
               </>
             ) : view === 'signup' ? (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="country">País / Country</Label>
+                  <Label htmlFor="country">{t('country')}</Label>
                   <Select
                     value={selectedCountry.code}
                     onValueChange={(value) => {
@@ -565,12 +546,7 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="username">
-                    {selectedCountry.code === "BR" ? "Usuário" : 
-                     selectedCountry.code === "US" ? "Username" :
-                     selectedCountry.code === "ES" ? "Usuario" :
-                     selectedCountry.code === "FR" ? "Utilisateur" : "Benutzername"}
-                  </Label>
+                  <Label htmlFor="username">{t('username')}</Label>
                   <Input
                     id="username"
                     value={username}
@@ -580,12 +556,7 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">
-                    {selectedCountry.code === "BR" ? "Nome Completo" : 
-                     selectedCountry.code === "US" ? "Full Name" :
-                     selectedCountry.code === "ES" ? "Nombre Completo" :
-                     selectedCountry.code === "FR" ? "Nom Complet" : "Vollständiger Name"}
-                  </Label>
+                  <Label htmlFor="fullName">{t('full_name')}</Label>
                   <Input
                     id="fullName"
                     value={fullName}
@@ -598,7 +569,7 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -609,12 +580,7 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">
-                    {selectedCountry.code === "BR" ? "Telefone" : 
-                     selectedCountry.code === "US" ? "Phone" :
-                     selectedCountry.code === "ES" ? "Teléfono" :
-                     selectedCountry.code === "FR" ? "Téléphone" : "Telefon"}
-                  </Label>
+                  <Label htmlFor="phone">{t('phone')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={selectedCountry.phoneCode}
@@ -634,12 +600,7 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="birthDate">
-                    {selectedCountry.code === "BR" ? "Data de Nascimento" : 
-                     selectedCountry.code === "US" ? "Birth Date" :
-                     selectedCountry.code === "ES" ? "Fecha de Nacimiento" :
-                     selectedCountry.code === "FR" ? "Date de Naissance" : "Geburtsdatum"}
-                  </Label>
+                  <Label htmlFor="birthDate">{t('birth_date')}</Label>
                   <Input
                     id="birthDate"
                     type="text"
@@ -648,7 +609,6 @@ const Auth = () => {
                       const formatted = formatDate(e.target.value, selectedCountry);
                       setBirthDateDisplay(formatted);
                       
-                      // Convert to ISO format for validation
                       const isoDate = parseDateToISO(formatted, selectedCountry);
                       setBirthDate(isoDate);
                     }}
@@ -658,12 +618,7 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">
-                    {selectedCountry.code === "BR" ? "Senha" : 
-                     selectedCountry.code === "US" ? "Password" :
-                     selectedCountry.code === "ES" ? "Contraseña" :
-                     selectedCountry.code === "FR" ? "Mot de passe" : "Passwort"}
-                  </Label>
+                  <Label htmlFor="password">{t('password')}</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -679,6 +634,7 @@ const Auth = () => {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? t('hide_password') : t('show_password')}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -695,16 +651,7 @@ const Auth = () => {
                   disabled={loading}
                   className="w-full"
                 >
-                  {loading ? 
-                    (selectedCountry.code === "BR" ? "Enviando código..." : 
-                     selectedCountry.code === "US" ? "Sending code..." :
-                     selectedCountry.code === "ES" ? "Enviando código..." :
-                     selectedCountry.code === "FR" ? "Envoi du code..." : "Code wird gesendet...") :
-                    (selectedCountry.code === "BR" ? "Criar Conta" : 
-                     selectedCountry.code === "US" ? "Create Account" :
-                     selectedCountry.code === "ES" ? "Crear Cuenta" :
-                     selectedCountry.code === "FR" ? "Créer un compte" : "Konto erstellen")
-                  }
+                  {loading ? t('loading') : t('signup')}
                 </Button>
 
                 <Button
@@ -712,37 +659,20 @@ const Auth = () => {
                   onClick={() => setView('initial')}
                   className="w-full"
                 >
-                  {selectedCountry.code === "BR" ? "Voltar" :
-                   selectedCountry.code === "US" ? "Back" :
-                   selectedCountry.code === "ES" ? "Volver" :
-                   selectedCountry.code === "FR" ? "Retour" : "Zurück"}
+                  {t('back')}
                 </Button>
               </>
-            ) : (
+            ) : view === 'verify' ? (
               <>
                 <div className="text-center space-y-2 mb-4">
-                  <h3 className="text-lg font-semibold">
-                    {selectedCountry.code === "BR" ? "Verificação de Telefone" : 
-                     selectedCountry.code === "US" ? "Phone Verification" :
-                     selectedCountry.code === "ES" ? "Verificación de Teléfono" :
-                     selectedCountry.code === "FR" ? "Vérification du téléphone" : "Telefonverifizierung"}
-                  </h3>
+                  <h3 className="text-lg font-semibold">{t('verification_code')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {selectedCountry.code === "BR" ? `Digite o código enviado para ${selectedCountry.phoneCode} ${phone}` : 
-                     selectedCountry.code === "US" ? `Enter the code sent to ${selectedCountry.phoneCode} ${phone}` :
-                     selectedCountry.code === "ES" ? `Ingrese el código enviado a ${selectedCountry.phoneCode} ${phone}` :
-                     selectedCountry.code === "FR" ? `Entrez le code envoyé à ${selectedCountry.phoneCode} ${phone}` : 
-                     `Geben Sie den an ${selectedCountry.phoneCode} ${phone} gesendeten Code ein`}
+                    {t('enter_verification_code')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="verificationCode">
-                    {selectedCountry.code === "BR" ? "Código de Verificação" : 
-                     selectedCountry.code === "US" ? "Verification Code" :
-                     selectedCountry.code === "ES" ? "Código de Verificación" :
-                     selectedCountry.code === "FR" ? "Code de vérification" : "Bestätigungscode"}
-                  </Label>
+                  <Label htmlFor="verificationCode">{t('verification_code')}</Label>
                   <Input
                     id="verificationCode"
                     value={verificationCode}
@@ -759,16 +689,7 @@ const Auth = () => {
                   disabled={loading || verificationCode.length !== 6}
                   className="w-full"
                 >
-                  {loading ? 
-                    (selectedCountry.code === "BR" ? "Verificando..." : 
-                     selectedCountry.code === "US" ? "Verifying..." :
-                     selectedCountry.code === "ES" ? "Verificando..." :
-                     selectedCountry.code === "FR" ? "Vérification..." : "Verifizierung...") :
-                    (selectedCountry.code === "BR" ? "Verificar Código" : 
-                     selectedCountry.code === "US" ? "Verify Code" :
-                     selectedCountry.code === "ES" ? "Verificar Código" :
-                     selectedCountry.code === "FR" ? "Vérifier le code" : "Code verifizieren")
-                  }
+                  {loading ? t('loading') : t('verify_code')}
                 </Button>
 
                 <Button
@@ -779,10 +700,41 @@ const Auth = () => {
                   }}
                   className="w-full"
                 >
-                  {selectedCountry.code === "BR" ? "Voltar" : 
-                   selectedCountry.code === "US" ? "Back" :
-                   selectedCountry.code === "ES" ? "Volver" :
-                   selectedCountry.code === "FR" ? "Retour" : "Zurück"}
+                  {t('back')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="text-center space-y-2 mb-4">
+                  <h3 className="text-lg font-semibold">{t('reset_password')}</h3>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t('email')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyPress={(e) => handleKeyPress(e, handleForgotPassword)}
+                    placeholder="seu@email.com"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ? t('loading') : t('reset_password')}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => setView('initial')}
+                  className="w-full"
+                >
+                  {t('back')}
                 </Button>
               </>
             )}
