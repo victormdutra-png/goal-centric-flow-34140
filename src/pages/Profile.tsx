@@ -18,6 +18,10 @@ import { toast } from 'sonner';
 import focusCoin from '@/assets/focus-coin.png';
 import { languages, Language } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BioMentionInput } from '@/components/BioMentionInput';
+import { BioMentionRequests } from '@/components/BioMentionRequests';
+import { extractMentions, validateMentions } from '@/lib/mentions';
+import { MentionText } from '@/components/MentionText';
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
@@ -68,6 +72,7 @@ export default function Profile() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguage, setShowLanguage] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [showBioMentions, setShowBioMentions] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editCaption, setEditCaption] = useState('');
@@ -174,10 +179,40 @@ export default function Profile() {
     setEditingBio(true);
   };
 
-  const handleBioSave = () => {
-    updateUserBio(newBio);
-    toast.success('Descrição atualizada!');
-    setEditingBio(false);
+  const handleBioSave = async () => {
+    if (!authUser?.id) return;
+
+    try {
+      // Extract and validate mentions
+      const usernames = extractMentions(newBio);
+      
+      if (usernames.length > 0) {
+        // Validate all mentions are approved
+        const validUserIds = await validateMentions(usernames, authUser.id);
+        
+        // Check if all mentions are valid
+        if (validUserIds.length !== usernames.length) {
+          toast.error('Algumas menções não são válidas. Você só pode mencionar usuários que aprovaram seu pedido.');
+          return;
+        }
+      }
+
+      // Update bio in Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({ bio: newBio })
+        .eq('id', authUser.id);
+
+      if (error) throw error;
+
+      // Update local store
+      updateUserBio(newBio);
+      toast.success('Descrição atualizada!');
+      setEditingBio(false);
+    } catch (error) {
+      console.error('Error updating bio:', error);
+      toast.error('Erro ao atualizar descrição');
+    }
   };
 
   const handleDeletePost = () => {
@@ -291,7 +326,7 @@ export default function Profile() {
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-card-foreground">{user.name}</h1>
                   <p className="text-sm text-primary font-medium">@{user.username || user.name.toLowerCase().replace(/\s+/g, '')}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{user.bio}</p>
+                  <MentionText text={user.bio} className="text-sm text-muted-foreground mt-1" />
                   {isOwnProfile && (
                     <Button
                       variant="ghost"
@@ -592,18 +627,36 @@ export default function Profile() {
             </div>
 
             {isOwnProfile && (
-              <div 
-                className="p-3 bg-card rounded-lg border border-destructive/50 cursor-pointer hover:bg-destructive/10"
-                onClick={() => {
-                  setShowSettings(false);
-                  setShowDeleteAccount(true);
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-destructive">Excluir Conta</span>
-                  <ChevronRight className="w-4 h-4 text-destructive" />
+              <>
+                <div 
+                  className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted/50"
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowBioMentions(true);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-sm">Menções na Bio</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
                 </div>
-              </div>
+
+                <div 
+                  className="p-3 bg-card rounded-lg border border-destructive/50 cursor-pointer hover:bg-destructive/10"
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowDeleteAccount(true);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-destructive">Excluir Conta</span>
+                    <ChevronRight className="w-4 h-4 text-destructive" />
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="p-3 bg-card rounded-lg border border-border">
@@ -681,6 +734,18 @@ export default function Profile() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Bio Mentions Management Dialog */}
+      <Dialog open={showBioMentions} onOpenChange={setShowBioMentions}>
+        <DialogContent className="max-w-[400px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Menções na Bio</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <BioMentionRequests />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Bio Dialog */}
       <Dialog open={editingBio} onOpenChange={setEditingBio}>
         <DialogContent className="max-w-[340px]">
@@ -688,15 +753,15 @@ export default function Profile() {
             <DialogTitle>Editar Descrição</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Textarea
+            <BioMentionInput
               value={newBio}
-              onChange={(e) => setNewBio(e.target.value)}
-              placeholder="Sua descrição..."
-              maxLength={150}
-              rows={4}
+              onChange={setNewBio}
+              placeholder="Sua descrição... (use @ para mencionar)"
+              className="min-h-[100px]"
+              maxLength={500}
             />
             <p className="text-xs text-muted-foreground mt-2">
-              {newBio.length}/150 caracteres
+              {newBio.length}/500 caracteres
             </p>
           </div>
           <DialogFooter>

@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      bio_mention_requests: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bio_mention_requests_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bio_mention_requests_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bio_mention_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bio_mention_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_reports: {
         Row: {
           comment_id: string
@@ -535,6 +591,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allow_bio_mentions: boolean
           avatar_url: string | null
           bio: string | null
           birth_date: string
@@ -553,6 +610,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          allow_bio_mentions?: boolean
           avatar_url?: string | null
           bio?: string | null
           birth_date: string
@@ -571,6 +629,7 @@ export type Database = {
           username: string
         }
         Update: {
+          allow_bio_mentions?: boolean
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string
@@ -641,6 +700,10 @@ export type Database = {
     Functions: {
       are_mutual_followers: {
         Args: { user1_id: string; user2_id: string }
+        Returns: boolean
+      }
+      can_mention_in_bio: {
+        Args: { mentioned_user_id: string; requester_id: string }
         Returns: boolean
       }
       create_notification: {
