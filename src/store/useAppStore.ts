@@ -269,7 +269,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('[Data] Failed to load posts:', error.message);
+        throw error;
+      }
       
       if (data) {
         const posts = data.map((post: any) => ({
@@ -474,43 +477,26 @@ export const useAppStore = create<AppState>((set, get) => ({
         });
       }
       
-      // Update Supabase profiles for FOCUS tracking (async, non-blocking)
-      const updateDatabase = async () => {
+      // Process FOCUS donation using secure RPC function (async, non-blocking)
+      const processDonation = async () => {
         try {
-          // Get current donor profile
-          const { data: donorProfile } = await supabase
-            .from('profiles')
-            .select('focus_donated')
-            .eq('id', state.currentUserId)
-            .single();
+          const { error } = await supabase.rpc('process_focus_donation', {
+            p_post_id: postId,
+            p_recipient_id: post.userId,
+            p_amount: 2
+          });
           
-          if (donorProfile) {
-            // Increment focus_donated for donor
-            await supabase
-              .from('profiles')
-              .update({ focus_donated: donorProfile.focus_donated + 2 })
-              .eq('id', state.currentUserId);
-          }
-          
-          // Get current recipient profile
-          const { data: recipientProfile } = await supabase
-            .from('profiles')
-            .select('total_focus_received')
-            .eq('id', post.userId)
-            .single();
-          
-          if (recipientProfile) {
-            // Increment total_focus_received for recipient
-            await supabase
-              .from('profiles')
-              .update({ total_focus_received: recipientProfile.total_focus_received + 2 })
-              .eq('id', post.userId);
-          }
-        } catch (error) {
-          console.error('Error updating FOCUS in database:', error);
+          if (error) throw error;
+        } catch (error: any) {
+          // Log error securely without exposing details to user
+          console.error('[Security] FOCUS donation failed:', {
+            postId,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
         }
       };
-      updateDatabase();
+      processDonation();
 
       const newPosts = state.posts.map((p) =>
         p.id === postId
@@ -867,9 +853,9 @@ export const useAppStore = create<AppState>((set, get) => ({
               follower_id: state.currentUserId,
               following_id: userId,
             });
-        } catch (error) {
-          console.error('Error saving follow to database:', error);
-        }
+    } catch (error: any) {
+      console.error('[Social] Follow action failed:', error?.message || 'Unknown error');
+    }
       };
       saveToDatabase();
 

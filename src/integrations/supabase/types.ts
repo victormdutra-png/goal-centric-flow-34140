@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      action_rate_limits: {
+        Row: {
+          action_count: number
+          action_type: string
+          created_at: string
+          id: string
+          last_action_at: string
+          user_id: string
+        }
+        Insert: {
+          action_count?: number
+          action_type: string
+          created_at?: string
+          id?: string
+          last_action_at?: string
+          user_id: string
+        }
+        Update: {
+          action_count?: number
+          action_type?: string
+          created_at?: string
+          id?: string
+          last_action_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bio_mention_requests: {
         Row: {
           created_at: string
@@ -706,6 +733,14 @@ export type Database = {
         Args: { mentioned_user_id: string; requester_id: string }
         Returns: boolean
       }
+      check_rate_limit: {
+        Args: {
+          p_action_type: string
+          p_max_actions: number
+          p_time_window_seconds: number
+        }
+        Returns: boolean
+      }
       create_notification: {
         Args: {
           p_comment_id?: string
@@ -727,13 +762,9 @@ export type Database = {
           username: string
         }[]
       }
-      increment_focus_donated: {
-        Args: { amount: number; user_id: string }
-        Returns: undefined
-      }
-      increment_focus_received: {
-        Args: { amount: number; user_id: string }
-        Returns: undefined
+      process_focus_donation: {
+        Args: { p_amount?: number; p_post_id: string; p_recipient_id: string }
+        Returns: Json
       }
     }
     Enums: {

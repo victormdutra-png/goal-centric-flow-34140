@@ -63,8 +63,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               
               setProfile(profileData);
               setLoading(false);
-            } catch (error) {
-              console.error('Error fetching profile:', error);
+            } catch (error: any) {
+              if (import.meta.env.DEV) {
+                console.error('[Auth] Profile fetch failed:', error.message);
+              }
               setLoading(false);
             }
           }, 0);
@@ -93,8 +95,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           setProfile(profileData);
           setLoading(false);
-        } catch (error) {
-          console.error('Error fetching profile:', error);
+        } catch (error: any) {
+          if (import.meta.env.DEV) {
+            console.error('[Auth] Profile fetch failed:', error.message);
+          }
           setLoading(false);
         }
       } else {

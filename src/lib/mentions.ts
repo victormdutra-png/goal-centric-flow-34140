@@ -53,8 +53,10 @@ export const validateMentions = async (
     }
 
     return validUserIds;
-  } catch (error) {
-    console.error('Error validating mentions:', error);
+  } catch (error: any) {
+    if (import.meta.env.DEV) {
+      console.error('[Mentions] Validation failed:', error.message);
+    }
     return [];
   }
 };
@@ -86,8 +88,10 @@ export const createMentions = async (
         throw error;
       }
     }
-  } catch (error) {
-    console.error('Error creating mentions:', error);
+  } catch (error: any) {
+    if (import.meta.env.DEV) {
+      console.error('[Mentions] Creation failed:', error.message);
+    }
   }
 };
 

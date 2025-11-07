@@ -91,8 +91,10 @@ export const BioMentionInput = ({
       setSuggestions(filtered);
       setShowSuggestions(filtered.length > 0);
       setSelectedIndex(0);
-    } catch (error) {
-      console.error('Error fetching approved mentions:', error);
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.error('[Mentions] Fetch failed:', error.message);
+      }
       setSuggestions([]);
       setShowSuggestions(false);
     }
@@ -144,8 +146,10 @@ export const BioMentionInput = ({
       } else {
         toast.success('Pedido de menção enviado!');
       }
-    } catch (error) {
-      console.error('Error requesting bio mention:', error);
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.error('[Mentions] Request failed:', error.message);
+      }
       toast.error('Erro ao solicitar menção');
     }
   };

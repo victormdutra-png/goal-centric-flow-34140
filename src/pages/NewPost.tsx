@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { MentionInput } from '@/components/MentionInput';
 import { processMentions } from '@/lib/mentions';
 import { useAuth } from '@/contexts/AuthContext';
+import { postContentSchema, quizSchema, validateFileUpload } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 const QUIZ_THEMES: { value: QuizTheme; label: string }[] = [
   { value: 'arquitetura', label: 'Arquitetura' },
@@ -101,6 +103,20 @@ export default function NewPost() {
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file
+      const validation = validateFileUpload(
+        file,
+        10 * 1024 * 1024, // 10MB max for media
+        postType === 'video' 
+          ? ['video/mp4', 'video/quicktime', 'video/webm']
+          : ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      );
+      
+      if (!validation.valid) {
+        toast.error(validation.error);
+        return;
+      }
+      
       setMediaFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -174,14 +190,16 @@ export default function NewPost() {
           return;
         }
         
-        if (questions.some(q => !q.question.trim())) {
-          toast.error('Preencha todas as perguntas do questionário');
-          return;
-        }
-        
-        if (questions.some(q => q.options.some(opt => !opt.trim()))) {
-          toast.error('Preencha todas as opções do questionário');
-          return;
+        // Validate each question with Zod
+        for (const question of questions) {
+          try {
+            quizSchema.parse(question);
+          } catch (error: any) {
+            const message = error.errors?.[0]?.message || 'Erro na validação do questionário';
+            toast.error(message);
+            logger.warn('Quiz validation failed', { error, question });
+            return;
+          }
         }
 
         const closesAt = new Date();
@@ -214,7 +232,7 @@ export default function NewPost() {
         // Process mentions asynchronously (non-blocking)
         if (caption.trim()) {
           processMentions(caption, authUser.id, postId).catch((error) => {
-            console.error('Error processing mentions:', error);
+            logger.error('Failed to process mentions', error, { postId });
           });
         }
         
@@ -245,7 +263,7 @@ export default function NewPost() {
       // Process mentions asynchronously (non-blocking)
       if (caption.trim()) {
         processMentions(caption, authUser.id, postId).catch((error) => {
-          console.error('Error processing mentions:', error);
+          logger.error('Failed to process mentions', error, { postId });
         });
       }
       
