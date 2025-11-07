@@ -28,7 +28,7 @@ export const validateMentions = async (
   try {
     // Get user IDs for these usernames
     const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
+      .from('public_profiles')
       .select('id, username')
       .in('username', usernames);
 

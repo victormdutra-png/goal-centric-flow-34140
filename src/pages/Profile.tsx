@@ -62,7 +62,7 @@ export default function Profile() {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('*')
           .eq('username', cleanUsername)
           .maybeSingle();

@@ -300,7 +300,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadUsers: async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('*');
       
       if (error) throw error;

@@ -78,7 +78,7 @@ export const BioMentionInput = ({
 
       // Fetch user details for approved mentions
       const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, username, full_name, avatar_url')
         .in('id', approvedUserIds);
 
@@ -104,7 +104,7 @@ export const BioMentionInput = ({
     try {
       // Get user ID from username
       const { data: profile, error: profileError } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id')
         .eq('username', username)
         .single();

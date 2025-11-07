@@ -28,7 +28,7 @@ export const NotificationBell = () => {
       if (userIds.length === 0) return;
 
       const { data } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, username, avatar_url')
         .in('id', userIds);
 
