@@ -205,9 +205,7 @@ export default function NewPost() {
         const closesAt = new Date();
         closesAt.setHours(closesAt.getHours() + quizDuration);
 
-        const postId = `p${Date.now()}`;
         const newPost = {
-          id: postId,
           userId: authUser.id,
           kind: postType,
           theme: postTheme,
@@ -227,10 +225,10 @@ export default function NewPost() {
           comments: [],
         };
 
-        addPost(newPost);
+        const postId = await addPost(newPost);
         
         // Process mentions asynchronously (non-blocking)
-        if (caption.trim()) {
+        if (postId && caption.trim()) {
           processMentions(caption, authUser.id, postId).catch((error) => {
             logger.error('Failed to process mentions', error, { postId });
           });
@@ -241,9 +239,7 @@ export default function NewPost() {
         return;
       }
 
-      const postId = `p${Date.now()}`;
       const newPost = {
-        id: postId,
         userId: authUser.id,
         kind: postType,
         theme: postTheme,
@@ -258,10 +254,10 @@ export default function NewPost() {
         comments: [],
       };
 
-      addPost(newPost);
+      const postId = await addPost(newPost);
       
       // Process mentions asynchronously (non-blocking)
-      if (caption.trim()) {
+      if (postId && caption.trim()) {
         processMentions(caption, authUser.id, postId).catch((error) => {
           logger.error('Failed to process mentions', error, { postId });
         });

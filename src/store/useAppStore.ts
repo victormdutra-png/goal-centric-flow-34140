@@ -82,7 +82,7 @@ interface AppState {
   toggleDarkMode: () => void;
   loadPosts: () => Promise<void>;
   loadUsers: () => Promise<void>;
-  addPost: (post: Post) => void;
+  addPost: (post: Omit<Post, 'id'>) => Promise<string | null>;
   updatePost: (postId: string, updates: Partial<Post>) => void;
   deletePost: (postId: string) => void;
   updateGoalProgress: (goalId: string, newValue: number) => void;
@@ -382,66 +382,71 @@ export const useAppStore = create<AppState>((set, get) => ({
   addPost: async (post) => {
     // Save to Supabase first
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('posts')
         .insert({
-          id: post.id,
           user_id: post.userId,
-          type: post.kind, // Database column is 'type' not 'kind'
-          image_url: post.mediaUrl, // Database column is 'image_url'
-          content: post.caption || '', // Database column is 'content', must not be null
+          type: post.kind,
+          image_url: post.mediaUrl,
+          content: post.caption || '',
           theme: post.theme,
-          music_name: post.musicUrl, // Database column is 'music_name'
-          created_at: post.createdAt.toISOString(),
-        });
+          music_name: post.musicUrl,
+        })
+        .select('id')
+        .single();
       
       if (error) {
         console.error('Error saving post to database:', error);
         toast.error('Erro ao salvar publicação');
-        return;
+        return null;
       }
+
+      // Create post with generated ID
+      const postWithId = { ...post, id: data.id };
+      
+      // Then update local state
+      set((state) => {
+        const newPosts = [postWithId, ...state.posts];
+        const newUniqueQuests = [...state.uniqueQuests];
+        const newMonthlyQuests = [...state.monthlyQuests];
+        
+        // Check for first post quests
+        if (post.kind === 'photo' && !state.uniqueQuests.find(q => q.id === 'first-photo')?.completed) {
+          const index = newUniqueQuests.findIndex(q => q.id === 'first-photo');
+          if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
+        }
+        if (post.kind === 'video' && !state.uniqueQuests.find(q => q.id === 'first-video')?.completed) {
+          const index = newUniqueQuests.findIndex(q => q.id === 'first-video');
+          if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
+        }
+
+        // Update monthly quest progress
+        const monthlyQuestIndex = newMonthlyQuests.findIndex(q => q.id === 'monthly-content');
+        if (monthlyQuestIndex !== -1 && post.userId === state.currentUserId) {
+          const quest = newMonthlyQuests[monthlyQuestIndex];
+          const newProgress = { ...quest.progress };
+          
+          if (post.kind === 'video') newProgress.videos++;
+          if (post.kind === 'photo') newProgress.photos++;
+          
+          const isCompleted = newProgress.videos >= quest.target.videos && newProgress.photos >= quest.target.photos;
+          
+          newMonthlyQuests[monthlyQuestIndex] = {
+            ...quest,
+            progress: newProgress,
+            completed: isCompleted,
+          };
+        }
+
+        return { posts: newPosts, uniqueQuests: newUniqueQuests, monthlyQuests: newMonthlyQuests };
+      });
+
+      return data.id;
     } catch (error) {
       console.error('Error saving post:', error);
       toast.error('Erro ao criar publicação');
-      return;
+      return null;
     }
-    
-    // Then update local state
-    set((state) => {
-      const newPosts = [post, ...state.posts];
-      const newUniqueQuests = [...state.uniqueQuests];
-      const newMonthlyQuests = [...state.monthlyQuests];
-      
-      // Check for first post quests
-      if (post.kind === 'photo' && !state.uniqueQuests.find(q => q.id === 'first-photo')?.completed) {
-        const index = newUniqueQuests.findIndex(q => q.id === 'first-photo');
-        if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
-      }
-      if (post.kind === 'video' && !state.uniqueQuests.find(q => q.id === 'first-video')?.completed) {
-        const index = newUniqueQuests.findIndex(q => q.id === 'first-video');
-        if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
-      }
-
-      // Update monthly quest progress
-      const monthlyQuestIndex = newMonthlyQuests.findIndex(q => q.id === 'monthly-content');
-      if (monthlyQuestIndex !== -1 && post.userId === state.currentUserId) {
-        const quest = newMonthlyQuests[monthlyQuestIndex];
-        const newProgress = { ...quest.progress };
-        
-        if (post.kind === 'video') newProgress.videos++;
-        if (post.kind === 'photo') newProgress.photos++;
-        
-        const isCompleted = newProgress.videos >= quest.target.videos && newProgress.photos >= quest.target.photos;
-        
-        newMonthlyQuests[monthlyQuestIndex] = {
-          ...quest,
-          progress: newProgress,
-          completed: isCompleted,
-        };
-      }
-
-      return { posts: newPosts, uniqueQuests: newUniqueQuests, monthlyQuests: newMonthlyQuests };
-    });
   },
 
   updatePost: (postId, updates) =>
