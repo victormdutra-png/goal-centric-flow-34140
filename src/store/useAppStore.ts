@@ -463,42 +463,77 @@ export const useAppStore = create<AppState>((set, get) => ({
       ),
     })),
 
-  likePost: (postId) =>
-    set((state) => {
-      const post = state.posts.find((p) => p.id === postId);
-      if (!post || post.likedBy.includes(state.currentUserId)) return state;
+  likePost: async (postId) => {
+    const state = get();
+    const post = state.posts.find((p) => p.id === postId);
+    if (!post || post.likedBy.includes(state.currentUserId)) return;
 
-      const newPosts = state.posts.map((p) =>
-        p.id === postId
-          ? { ...p, likes: p.likes + 1, likedBy: [...p.likedBy, state.currentUserId] }
-          : p
-      );
+    try {
+      // Save to database
+      const { error } = await supabase
+        .from('likes')
+        .insert({
+          post_id: postId,
+          user_id: state.currentUserId,
+        });
 
-      // Check unique quests for likes
-      const updatedPost = newPosts.find(p => p.id === postId)!;
-      const newUniqueQuests = [...state.uniqueQuests];
-      
-      if (updatedPost.likes >= 20 && !state.uniqueQuests.find(q => q.id === 'likes-20')?.completed) {
-        const index = newUniqueQuests.findIndex(q => q.id === 'likes-20');
-        if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
-      }
+      if (error) throw error;
 
-      return { posts: newPosts, uniqueQuests: newUniqueQuests };
-    }),
+      // Update local state
+      set((state) => {
+        const newPosts = state.posts.map((p) =>
+          p.id === postId
+            ? { ...p, likes: p.likes + 1, likedBy: [...p.likedBy, state.currentUserId] }
+            : p
+        );
 
-  unlikePost: (postId) =>
-    set((state) => {
-      const post = state.posts.find((p) => p.id === postId);
-      if (!post || !post.likedBy.includes(state.currentUserId)) return state;
+        // Check unique quests for likes
+        const updatedPost = newPosts.find(p => p.id === postId)!;
+        const newUniqueQuests = [...state.uniqueQuests];
+        
+        if (updatedPost.likes >= 20 && !state.uniqueQuests.find(q => q.id === 'likes-20')?.completed) {
+          const index = newUniqueQuests.findIndex(q => q.id === 'likes-20');
+          if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
+        }
 
-      const newPosts = state.posts.map((p) =>
-        p.id === postId
-          ? { ...p, likes: p.likes - 1, likedBy: p.likedBy.filter(id => id !== state.currentUserId) }
-          : p
-      );
+        return { posts: newPosts, uniqueQuests: newUniqueQuests };
+      });
+    } catch (error: any) {
+      console.error('[Social] Like failed:', error?.message || 'Unknown error');
+      toast.error('Erro ao curtir publicação');
+    }
+  },
 
-      return { posts: newPosts };
-    }),
+  unlikePost: async (postId) => {
+    const state = get();
+    const post = state.posts.find((p) => p.id === postId);
+    if (!post || !post.likedBy.includes(state.currentUserId)) return;
+
+    try {
+      // Delete from database
+      const { error } = await supabase
+        .from('likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', state.currentUserId);
+
+      if (error) throw error;
+
+      // Update local state
+      set((state) => {
+        const newPosts = state.posts.map((p) =>
+          p.id === postId
+            ? { ...p, likes: p.likes - 1, likedBy: p.likedBy.filter(id => id !== state.currentUserId) }
+            : p
+        );
+
+        return { posts: newPosts };
+      });
+    } catch (error: any) {
+      console.error('[Social] Unlike failed:', error?.message || 'Unknown error');
+      toast.error('Erro ao descurtir publicação');
+    }
+  },
 
   donatePoints: (postId) =>
     set((state) => {
@@ -578,74 +613,148 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { posts: newPosts, userPoints: newUserPoints, uniqueQuests: newUniqueQuests, weeklyQuests: newWeeklyQuests };
     }),
 
-  addComment: (postId, text) =>
-    set((state) => {
-      const comment: Comment = {
-        id: `c${Date.now()}`,
-        userId: state.currentUserId,
-        text,
-        createdAt: new Date(),
-      };
+  addComment: async (postId, text) => {
+    const state = get();
+    
+    try {
+      // Validate comment
+      const { commentSchema } = await import('@/lib/validation');
+      const validated = commentSchema.parse({ content: text });
 
-      const newPosts = state.posts.map((post) =>
-        post.id === postId
-          ? { ...post, comments: [...(post.comments || []), comment] }
-          : post
-      );
+      // Save to database
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          post_id: postId,
+          user_id: state.currentUserId,
+          content: validated.content,
+        })
+        .select()
+        .single();
 
-      // Check unique quest for 20 comments
-      const updatedPost = newPosts.find(p => p.id === postId);
-      const newUniqueQuests = [...state.uniqueQuests];
-      
-      if (updatedPost && updatedPost.comments && updatedPost.comments.length >= 20) {
-        if (!state.uniqueQuests.find(q => q.id === 'comments-20')?.completed) {
-          const index = newUniqueQuests.findIndex(q => q.id === 'comments-20');
-          if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
+      if (error) throw error;
+
+      // Update local state
+      set((state) => {
+        const comment: Comment = {
+          id: data.id,
+          userId: data.user_id,
+          text: data.content,
+          createdAt: new Date(data.created_at),
+          pinned: data.pinned,
+          reportCount: data.report_count || 0,
+        };
+
+        const newPosts = state.posts.map((post) =>
+          post.id === postId
+            ? { ...post, comments: [...(post.comments || []), comment] }
+            : post
+        );
+
+        // Check unique quest for 20 comments
+        const updatedPost = newPosts.find(p => p.id === postId);
+        const newUniqueQuests = [...state.uniqueQuests];
+        
+        if (updatedPost && updatedPost.comments && updatedPost.comments.length >= 20) {
+          if (!state.uniqueQuests.find(q => q.id === 'comments-20')?.completed) {
+            const index = newUniqueQuests.findIndex(q => q.id === 'comments-20');
+            if (index !== -1) newUniqueQuests[index] = { ...newUniqueQuests[index], completed: true };
+          }
         }
-      }
 
-      return { posts: newPosts, uniqueQuests: newUniqueQuests };
-    }),
+        return { posts: newPosts, uniqueQuests: newUniqueQuests };
+      });
+    } catch (error: any) {
+      console.error('[Social] Comment failed:', error?.message || 'Unknown error');
+      toast.error('Erro ao adicionar comentário');
+    }
+  },
 
-  editComment: (postId, commentId, text) =>
-    set((state) => ({
-      posts: state.posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              comments: post.comments?.map((comment) =>
-                comment.id === commentId ? { ...comment, text } : comment
-              ),
-            }
-          : post
-      ),
-    })),
+  editComment: async (postId, commentId, text) => {
+    try {
+      // Validate comment
+      const { commentSchema } = await import('@/lib/validation');
+      const validated = commentSchema.parse({ content: text });
 
-  deleteComment: (postId, commentId) =>
-    set((state) => ({
-      posts: state.posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              comments: post.comments?.filter((comment) => comment.id !== commentId),
-            }
-          : post
-      ),
-    })),
+      // Update in database
+      const { error } = await supabase
+        .from('comments')
+        .update({ content: validated.content })
+        .eq('id', commentId)
+        .eq('user_id', get().currentUserId);
 
-  pinComment: (postId, commentId) =>
-    set((state) => {
-      const post = state.posts.find(p => p.id === postId);
-      if (!post) return state;
+      if (error) throw error;
 
-      // Check if there are already 3 pinned comments
-      const pinnedCount = post.comments?.filter(c => c.pinned).length || 0;
-      if (pinnedCount >= 3) {
-        // Return state unchanged and indicate error
-        return { ...state, error: 'Máximo de 3 comentários fixados atingido' };
-      }
+      // Update local state
+      set((state) => ({
+        posts: state.posts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: post.comments?.map((comment) =>
+                  comment.id === commentId ? { ...comment, text: validated.content } : comment
+                ),
+              }
+            : post
+        ),
+      }));
+    } catch (error: any) {
+      console.error('[Social] Edit comment failed:', error?.message || 'Unknown error');
+      toast.error('Erro ao editar comentário');
+    }
+  },
 
-      return {
+  deleteComment: async (postId, commentId) => {
+    try {
+      // Delete from database
+      const { error } = await supabase
+        .from('comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      // Update local state
+      set((state) => ({
+        posts: state.posts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: post.comments?.filter((comment) => comment.id !== commentId),
+              }
+            : post
+        ),
+      }));
+    } catch (error: any) {
+      console.error('[Social] Delete comment failed:', error?.message || 'Unknown error');
+      toast.error('Erro ao deletar comentário');
+    }
+  },
+
+  pinComment: async (postId, commentId) => {
+    const state = get();
+    const post = state.posts.find(p => p.id === postId);
+    if (!post) return;
+
+    // Check if there are already 3 pinned comments
+    const pinnedCount = post.comments?.filter(c => c.pinned).length || 0;
+    if (pinnedCount >= 3) {
+      toast.error('Máximo de 3 comentários fixados atingido');
+      return;
+    }
+
+    try {
+      // Update in database - only post author can pin
+      const { error } = await supabase
+        .from('comments')
+        .update({ pinned: true })
+        .eq('id', commentId)
+        .eq('post_id', postId);
+
+      if (error) throw error;
+
+      // Update local state
+      set((state) => ({
         posts: state.posts.map((p) =>
           p.id === postId
             ? {
@@ -656,23 +765,42 @@ export const useAppStore = create<AppState>((set, get) => ({
               }
             : p
         ),
-        error: undefined,
-      };
-    }),
+      }));
+    } catch (error: any) {
+      console.error('[Social] Pin comment failed:', error?.message || 'Unknown error');
+      toast.error('Erro ao fixar comentário');
+    }
+  },
 
-  unpinComment: (postId, commentId) =>
-    set((state) => ({
-      posts: state.posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              comments: post.comments?.map((comment) =>
-                comment.id === commentId ? { ...comment, pinned: false } : comment
-              ),
-            }
-          : post
-      ),
-    })),
+  unpinComment: async (postId, commentId) => {
+    try {
+      // Update in database
+      const { error } = await supabase
+        .from('comments')
+        .update({ pinned: false })
+        .eq('id', commentId)
+        .eq('post_id', postId);
+
+      if (error) throw error;
+
+      // Update local state
+      set((state) => ({
+        posts: state.posts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: post.comments?.map((comment) =>
+                  comment.id === commentId ? { ...comment, pinned: false } : comment
+                ),
+              }
+            : post
+        ),
+      }));
+    } catch (error: any) {
+      console.error('[Social] Unpin comment failed:', error?.message || 'Unknown error');
+      toast.error('Erro ao desafixar comentário');
+    }
+  },
 
   reportComment: (postId, commentId, reason) =>
     set((state) => {
