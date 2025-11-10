@@ -264,38 +264,89 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   loadPosts: async () => {
     try {
-      const { data, error } = await supabase
+      // Load posts
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error('[Data] Failed to load posts:', error.message);
-        throw error;
-      }
-      
-      if (data) {
-        const posts = data.map((post: any) => ({
+      if (postsError) throw postsError;
+      if (!postsData) return;
+
+      // Load all likes
+      const { data: likesData } = await supabase
+        .from('likes')
+        .select('post_id, user_id');
+
+      // Load all comments
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      // Load all donations
+      const { data: donationsData } = await supabase
+        .from('donations')
+        .select('*');
+
+      // Group data by post_id
+      const likesByPost = new Map<string, string[]>();
+      likesData?.forEach((like: any) => {
+        const postLikes = likesByPost.get(like.post_id) || [];
+        postLikes.push(like.user_id);
+        likesByPost.set(like.post_id, postLikes);
+      });
+
+      const commentsByPost = new Map<string, Comment[]>();
+      commentsData?.forEach((comment: any) => {
+        const postComments = commentsByPost.get(comment.post_id) || [];
+        postComments.push({
+          id: comment.id,
+          userId: comment.user_id,
+          text: comment.content,
+          createdAt: new Date(comment.created_at),
+          pinned: comment.pinned,
+          reportCount: comment.report_count || 0,
+        });
+        commentsByPost.set(comment.post_id, postComments);
+      });
+
+      const donationsByPost = new Map<string, { donatedBy: string[], totalPoints: number }>();
+      donationsData?.forEach((donation: any) => {
+        const postDonations = donationsByPost.get(donation.post_id) || { donatedBy: [], totalPoints: 0 };
+        postDonations.donatedBy.push(donation.from_user_id);
+        postDonations.totalPoints += donation.amount;
+        donationsByPost.set(donation.post_id, postDonations);
+      });
+
+      // Map posts with related data
+      const posts: Post[] = postsData.map((post: any) => {
+        const likedBy = likesByPost.get(post.id) || [];
+        const comments = commentsByPost.get(post.id) || [];
+        const donations = donationsByPost.get(post.id) || { donatedBy: [], totalPoints: 0 };
+
+        return {
           id: post.id,
           userId: post.user_id,
-          kind: post.type as PostKind, // Database column is 'type' not 'kind'
-          mediaUrl: post.image_url, // Database column is 'image_url' not 'media_url'
-          caption: post.content, // Database column is 'content' not 'caption'
+          kind: post.type as PostKind,
+          mediaUrl: post.image_url,
+          caption: post.content,
           theme: post.theme,
-          musicUrl: post.music_name, // Database has 'music_name' for music URL
-          likes: 0, // Likes are tracked in separate table
-          comments: [], // Comments are tracked in separate table
-          points: 0, // Calculate from donations table
+          musicUrl: post.music_name,
+          likes: likedBy.length,
+          comments,
+          points: donations.totalPoints,
           createdAt: new Date(post.created_at),
-          quizTheme: post.theme, // Use theme as quiz theme
-          quizQuestions: undefined, // Quiz data not in posts table
-          likedBy: [], // Load from likes table
-          donatedBy: [], // Load from donations table
-        }));
-        set({ posts });
-      }
-    } catch (error) {
-      console.error('Error loading posts:', error);
+          quizTheme: post.theme,
+          quizQuestions: undefined,
+          likedBy,
+          donatedBy: donations.donatedBy,
+        };
+      });
+
+      set({ posts, error: undefined });
+    } catch (error: any) {
+      console.error('[Data] Failed to load posts:', error?.message || 'Unknown error');
       set({ error: 'Erro ao carregar publicações' });
     }
   },

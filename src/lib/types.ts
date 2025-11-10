@@ -87,6 +87,7 @@ export interface Comment {
   text: string;
   createdAt: Date;
   pinned?: boolean;
+  reportCount?: number;
 }
 
 export interface QuizAnswer {
